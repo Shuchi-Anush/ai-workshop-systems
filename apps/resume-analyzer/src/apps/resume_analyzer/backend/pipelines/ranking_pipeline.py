@@ -1,11 +1,11 @@
 import time
 from typing import List, Dict
 from ai_contracts.interfaces.ranking import ICandidateAggregator, IRanker
-from shared.schemas.retrieval import RetrievedChunk
+from ai_contracts.schemas.retrieval import RetrievedChunk
 from apps.resume_analyzer.backend.schemas.ranking import RankedCandidate, RankingResult, CandidateScore, RankingBreakdown
 from apps.resume_analyzer.backend.schemas.domain import Candidate
 from ai_contracts.interfaces.storage import IMetadataStore
-from shared.pipelines.base import PipelineObservabilityMixin
+from ai_observability.pipelines.base import PipelineObservabilityMixin
 
 class CandidateAggregator(ICandidateAggregator, PipelineObservabilityMixin):
     """

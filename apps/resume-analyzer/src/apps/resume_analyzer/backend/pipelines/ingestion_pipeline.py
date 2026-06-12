@@ -11,7 +11,7 @@ from ai_contracts.interfaces.storage import IMetadataStore
 from ai_contracts.schemas.common import ProcessingStatus, ErrorInfo
 from apps.resume_analyzer.backend.schemas.ingestion import IngestionRequest, IngestionResult
 from ai_vector.schemas.vector import VectorRecord
-from shared.pipelines.base import PipelineObservabilityMixin
+from ai_observability.pipelines.base import PipelineObservabilityMixin
 
 class IngestionPipeline(IIngestionService, PipelineObservabilityMixin):
     """

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from shared.schemas.retrieval import RetrievalQuery, RetrievalResult
+from ai_contracts.schemas.retrieval import RetrievalQuery, RetrievalResult
 
 class IRetriever(ABC):
     """

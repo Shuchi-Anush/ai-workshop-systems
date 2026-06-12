@@ -1,4 +1,4 @@
-from shared.schemas.domain import Candidate, SkillTag
+from apps.resume_analyzer.backend.schemas.domain import Candidate, SkillTag
 from ai_contracts.schemas.common import BaseMetadata
 
 # Synthetic Resumes (Raw Text)

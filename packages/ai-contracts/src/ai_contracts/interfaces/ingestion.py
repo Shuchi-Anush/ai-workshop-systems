@@ -1,15 +1,18 @@
 from abc import ABC, abstractmethod
-from shared.schemas.ingestion import IngestionRequest, IngestionResult
+from typing import TypeVar, Generic
 
-class IIngestionService(ABC):
+IngestionRequestT = TypeVar("IngestionRequestT")
+IngestionResultT = TypeVar("IngestionResultT")
+
+class IIngestionService(ABC, Generic[IngestionRequestT, IngestionResultT]):
     """
     Orchestrates the entire ingestion lifecycle.
     """
     
     @abstractmethod
-    def ingest(self, request: IngestionRequest) -> IngestionResult:
+    def ingest(self, request: IngestionRequestT) -> IngestionResultT:
         pass
         
     @abstractmethod
-    async def ingest_async(self, request: IngestionRequest) -> IngestionResult:
+    async def ingest_async(self, request: IngestionRequestT) -> IngestionResultT:
         pass

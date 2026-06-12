@@ -1,17 +1,17 @@
 import pytest
-from shared.mocks.mock_parser import MockParser, MockCleaner, MockSectionParser, MockChunker
+from mocks.mock_parser import MockParser, MockCleaner, MockSectionParser, MockChunker
+from mocks.mock_metadata_store import MockMetadataStore
 from ai_testing.mocks.mock_embedder import MockEmbedder
 from ai_testing.mocks.mock_vectordb import MockVectorDB
-from shared.mocks.mock_metadata_store import MockMetadataStore
-from shared.pipelines.ingestion_pipeline import IngestionPipeline
-from shared.pipelines.retrieval_pipeline import RetrievalPipeline
-from shared.pipelines.ranking_pipeline import CandidateAggregator, RankingPipeline
+from apps.resume_analyzer.backend.pipelines.ingestion_pipeline import IngestionPipeline
+from ai_contracts.pipelines.retrieval_pipeline import RetrievalPipeline
+from apps.resume_analyzer.backend.pipelines.ranking_pipeline import CandidateAggregator, RankingPipeline
 from ai_contracts.schemas.common import ProcessingStatus
-from ai_contracts.schemas.common import ProcessingStatus
-from shared.schemas.ingestion import IngestionRequest
-from shared.schemas.ranking import RankingResult
-from shared.schemas.retrieval import RetrievalQuery
-from tests.fixtures.synthetic_data import RESUME_BACKEND, RESUME_ML, CANDIDATE_BACKEND, CANDIDATE_ML
+from apps.resume_analyzer.backend.schemas.ingestion import IngestionRequest
+from apps.resume_analyzer.backend.schemas.ranking import RankingResult
+from ai_contracts.schemas.retrieval import RetrievalQuery
+from fixtures.synthetic_data import RESUME_BACKEND, RESUME_ML, CANDIDATE_BACKEND, CANDIDATE_ML
+
 
 @pytest.fixture
 def infrastructure():

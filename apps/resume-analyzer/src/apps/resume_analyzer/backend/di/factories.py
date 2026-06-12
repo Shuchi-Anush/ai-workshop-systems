@@ -1,7 +1,5 @@
 from ai_contracts.interfaces.vectordb import IVectorDB
 from ai_contracts.interfaces.storage import IMetadataStore
-from ai_testing.mocks.mock_vectordb import MockVectorDB
-from shared.mocks.mock_metadata_store import MockMetadataStore
 from apps.resume_analyzer.backend.di.container import get_container
 
 def configure_mock_infrastructure() -> None:
@@ -9,6 +7,9 @@ def configure_mock_infrastructure() -> None:
     Wires the container with mock implementations.
     To be used during test initialization and offline architecture stabilization.
     """
+    from ai_testing.mocks.mock_vectordb import MockVectorDB
+    from mocks.mock_metadata_store import MockMetadataStore
+    
     container = get_container()
     
     # Register singletons to preserve state across service calls during testing

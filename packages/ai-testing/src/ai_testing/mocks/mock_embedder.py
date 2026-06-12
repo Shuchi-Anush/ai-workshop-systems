@@ -2,7 +2,7 @@ import hashlib
 import numpy as np
 from typing import List
 from ai_contracts.interfaces.embedder import IEmbedder
-from shared.schemas.domain import DocumentChunk
+from ai_contracts.schemas.chunk import DocumentChunk
 from ai_vector.schemas.vector import EmbeddingVector
 
 class MockEmbedder(IEmbedder):

@@ -1,4 +1,4 @@
-from shared.providers.registry import DependencyRegistry
+from ai_contracts.providers.registry import DependencyRegistry
 
 # Global container instance for the application lifecycle.
 # In a full FastAPI app, this might be attached to app.state.

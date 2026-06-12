@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import BinaryIO, TypeVar, Generic
-from shared.schemas.ingestion import ParsingResult
+from ai_contracts.schemas.ingestion import ParsingResult
 
 DocT = TypeVar("DocT")
 

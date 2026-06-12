@@ -1,7 +1,7 @@
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 from apps.resume_analyzer.backend.schemas.domain import Candidate
-from shared.schemas.retrieval import RetrievedChunk
+from ai_contracts.schemas.retrieval import RetrievedChunk
 from ai_contracts.schemas.common import TimestampMixin
 
 class RankingBreakdown(BaseModel):
