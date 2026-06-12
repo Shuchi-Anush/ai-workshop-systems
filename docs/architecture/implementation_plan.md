@@ -1,84 +1,54 @@
-# AI Workshop Systems: Repository Deep Analysis & Architecture Plan
+# AI Systems Platform Monorepo - Pre-Migration Blueprint
 
-This document outlines the initial findings, architectural vision, and action plan for the `ai-workshop-systems` monorepo, fulfilling the requirement to deeply inspect the repository before generating implementation code.
+## 1. Goal Description
 
-## Repository Analysis
+This document serves as the **Safe Execution Blueprint** for the transition to the `uv` Workspace multi-app platform. We have performed a full static migration analysis of the codebase to identify dangerous couplings, unstable import hotspots, and deployment isolation violations *before* any physical files are moved.
 
-The repository is structured as a production-minded AI engineering monorepo rather than a rapid prototype. It prioritizes explicit boundaries and modularity. 
+## 2. Deep Repository Analysis & Risk Identification
 
-**Strengths:**
-* **Modular Layout**: The split between `shared/` infrastructure and task-specific logic (e.g., `task_01_resume_rag/`) encourages reusability and isolated testing.
-* **Separation of Concerns**: The existence of `api`, `parser`, `rag`, `ranking`, and `services` layers within `task_01_resume_rag/src/` demonstrates a mature backend structure.
-* **Architecture-First Mindset**: The README establishes clear boundaries (e.g., API layer contains no business logic).
+Based on our static analysis, we have identified several critical breaking points that must be addressed carefully during the migration.
 
-**Current Gaps:**
-* **Documentation**: The `docs/` folder exists but lacks the detailed architectural documentation necessary for a production system.
-* **Metadata Infrastructure**: While the philosophy emphasizes rich metadata, the current FAISS implementation and schema definitions likely need expansion to support complex section-based chunking and retrieval.
-* **Async & Scaling Prep**: No clear scaffolding for async task queues (e.g., Celery, Redis RQ) exists yet, which will be necessary for large-scale document ingestion.
+### A. Unstable Import Hotspots (Danger)
+The file `shared/schemas/domain.py` contains `ResumeDocument` and `Candidate`. If `shared/schemas` is blindly moved into `packages/ai-contracts`, the supposedly generic contracts package will be polluted with resume-specific semantics. 
+**Resolution**: `ResumeDocument` and `Candidate` must be extracted locally to `apps/resume-analyzer/schemas/` *before* the generic models (`DocumentChunk`, `BaseMetadata`) are packaged.
 
-## Inferred Architecture
+### B. Over-Generalized Pipelines
+`shared/pipelines/` orchestrates resume ingestion and retrieval. This is highly business-specific logic. 
+**Resolution**: Classified as `APP_LOCAL_ONLY`. It must be moved directly to `apps/resume-analyzer/pipelines/`.
 
-Based on the repository structure and objectives, the architecture is designed as a **Multi-Stage Semantic Intelligence Pipeline**:
+### C. Workspace Lockfile Conflicts
+If apps drift in their underlying PyTorch or SentenceTransformer versions, the entire AI platform can break.
+**Resolution**: The root `pyproject.toml` will establish a strict `[tool.uv.workspace]` definition to force a unified `uv.lock` resolution across all apps and packages.
 
-1.  **Ingestion & Parsing (`parser/`)**: Deterministic extraction of raw text from PDFs/DOCXs, preserving semantic blocks (Experience, Education, Skills) rather than naive character splitting.
-2.  **Semantic Chunking (`rag/chunker.py`)**: A context-aware chunking strategy that maps structured resume sections to individual vector representations, maintaining rich metadata links back to the candidate and resume.
-3.  **Vectorization (`rag/embedder.py`, `rag/vectordb.py`)**: Generation of dense embeddings (via Sentence Transformers) stored in FAISS (with an explicitly planned migration path to Qdrant/PostgreSQL pgvector).
-4.  **Retrieval (`rag/retriever.py`)**: Metadata-aware fetching of candidate chunks based on Job Description (JD) semantics.
-5.  **Aggregation & Ranking (`ranking/`)**: A crucial step separating this from standard RAG. Chunk-level hits are aggregated to candidate-level scores using weighted heuristics (skills overlap, experience relevance).
-6.  **Service Orchestration (`services/`)**: Business logic tying the pipeline together, independent of the FastAPI routing layer.
-7.  **API Layer (`api/`)**: Thin Pydantic-validated REST endpoints.
+## 3. Package Extraction Readiness Matrix
 
-## Missing Systems
+| Current Module | Target Destination | Classification |
+| --- | --- | --- |
+| `shared/schemas/common.py` | `packages/ai-contracts` | **READY_FOR_EXTRACTION** |
+| `shared/schemas/vector.py` | `packages/ai-vector` | **READY_FOR_EXTRACTION** |
+| `shared/schemas/domain.py` | *Split: App + Package* | **NEEDS_REFACTOR** |
+| `shared/interfaces/*` | `packages/ai-contracts` | **READY_FOR_EXTRACTION** |
+| `shared/mocks/*` | `packages/ai-testing` | **READY_FOR_EXTRACTION** |
+| `shared/pipelines/*` | `apps/resume-analyzer` | **APP_LOCAL_ONLY** |
 
-To meet the production-oriented and future scaling requirements, the following systems and conceptual frameworks are currently missing or under-developed:
+## 4. Final Migration Execution Checklist
 
-*   **Metadata Management Layer**: A structured database (e.g., PostgreSQL) to hold relational candidate data (Candidate ID -> Resume ID -> Chunk IDs) alongside the vector store.
-*   **Asynchronous Ingestion Queue**: A system to handle time-consuming PDF parsing and embedding without blocking API requests.
-*   **Structured Chunking Strategy**: The logic to intelligently slice resumes by semantic headers rather than fixed token lengths.
-*   **Hybrid Search Mechanisms**: Support for BM25 (sparse) + Dense embeddings, followed by cross-encoder reranking.
+The following 10 pre-migration documents have been successfully generated under `docs/migration-analysis/`:
+1. `01_import_graph_analysis.md`
+2. `02_package_extraction_readiness.md`
+3. `03_app_boundary_analysis.md`
+4. `04_uv_workspace_execution.md`
+5. `05_infrastructure_execution.md`
+6. `06_ci_cd_impact_analysis.md`
+7. `07_migration_blast_radius.md`
+8. `08_future_scaling_simulation.md`
+9. `09_repository_governance_enforcement.md`
+10. `10_final_migration_checklist.md`
 
-## Documentation Generation Plan
+All architectural prerequisites have been satisfied. 
 
-Before any core python code is modified, the following documentation will be generated to codify the architectural rules.
-
-### 1. Architecture Docs (`docs/architecture/`)
-*   **`system-overview.md`**: High-level component interaction and module boundaries.
-*   **`retrieval-pipeline.md`**: Detailed workflow from JD to Chunk retrieval, emphasizing metadata preservation.
-*   **`ranking-pipeline.md`**: Candidate aggregation logic and heuristic weighting strategy.
-*   **`ingestion-pipeline.md`**: Deterministic parsing and semantic chunking rules.
-*   **`vector-storage.md`**: Current FAISS usage and the abstraction contract required.
-
-### 2. Workflow Docs (`docs/workflows/`)
-*   **`agy_system_prompt.md`**: Updating with AI context and engineering constraints.
-*   **`implementation_strategy.md`**: Phased rollouts and coding standards.
-*   **`repository_conventions.md`**: Git flows, testing mandates, and typing requirements.
-*   **`development_workflow.md`**: Local environment setup and deterministic testing.
-
-### 3. Task Docs (`docs/tasks/`)
-*   **`task_01_resume_rag.md`**: Deep dive into the current Resume RAG specific architecture.
-
-### 4. Future Docs (`docs/future/`)
-*   **`qdrant-migration-plan.md`**: Steps to replace FAISS with Qdrant.
-*   **`async-ingestion-roadmap.md`**: Plan for introducing Redis/Celery.
-*   **`scaling-considerations.md`**: Multi-tenant and distributed retrieval prep.
-
-## Implementation Sequencing Recommendations
-
-Once the documentation is established and approved, the engineering effort should proceed in this order:
-
-1.  **Phase 1: Solidify Data Models (Schemas)**
-    *   Define strict Pydantic models in `shared/schemas/` for `DocumentChunk`, `CandidateMetadata`, and `RetrievalResult`.
-2.  **Phase 2: Implement Semantic Chunker**
-    *   Build out `task_01_resume_rag/src/rag/chunker.py` to support section-aware splitting, discarding naive recursive character splitters.
-3.  **Phase 3: VectorDB Abstraction**
-    *   Refactor `vectordb.py` to ensure the interface allows an easy swap from FAISS to Qdrant, strictly enforcing metadata insertion.
-4.  **Phase 4: Candidate Aggregation & Ranking**
-    *   Implement the logic in `ranking/` to aggregate chunk-level hits into candidate-level scores.
-5.  **Phase 5: Service Orchestration & API integration**
-    *   Wire the completed modules into `resume_service.py` and `candidate_service.py`, exposing them through the FastAPI routes.
-
----
-
-## User Review Required
+## 5. User Review Required
 > [!IMPORTANT]
-> Please review the analysis, missing systems, and documentation generation plan. Upon your approval, I will autonomously generate and populate all missing documentation files across the `docs/` directories. No application code will be generated until the documentation phase is complete.
+> The Full Static Migration Analysis is complete and the blueprint is finalized. We are now ready to cross the boundary into physical execution.
+> 
+> Once approved, I will begin the **Workspace Setup and Package Extraction** phase. This will involve rewriting imports, extracting `ai-contracts`, `ai-vector`, and `ai-testing`, and restructuring the `apps/` directory. Proceed?
