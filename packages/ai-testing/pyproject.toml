@@ -1,0 +1,12 @@
+[project]
+name = "ai-testing"
+version = "0.1.0"
+description = "Internal package for ai-testing"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
