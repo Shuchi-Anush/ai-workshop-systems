@@ -1,1 +1,0 @@
-from apps.resume_analyzer.backend.pipelines.ingestion_pipeline import IngestionPipeline

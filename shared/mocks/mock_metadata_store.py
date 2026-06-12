@@ -1,1 +1,0 @@
-from apps.resume_analyzer.tests.mocks.mock_metadata_store import MockMetadataStore

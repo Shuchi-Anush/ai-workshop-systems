@@ -1,1 +1,0 @@
-from apps.resume_analyzer.backend.di.factories import configure_mock_infrastructure

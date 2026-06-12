@@ -1,1 +1,0 @@
-from ai_testing.mocks.mock_embedder import *

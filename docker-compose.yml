@@ -9,17 +9,16 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./task_01_resume_rag:/app/task_01_resume_rag
-      - ./shared:/app/shared
+      - ./apps:/app/apps
       - ./packages:/app/packages
-      - ./tests:/app/tests
+      - ./scripts:/app/scripts
       - ai_workshop_data:/data
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: ["uv", "run", "pytest", "tests/"]
+    command: ["uv", "run", "uvicorn", "apps.resume_analyzer.backend.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   ollama:
     image: ollama/ollama:latest

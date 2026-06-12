@@ -11,15 +11,13 @@ WORKDIR /app
 RUN pip install --no-cache-dir uv
 
 # Copy the workspace configuration and lockfile
-COPY pyproject.toml ./
+COPY pyproject.toml uv.lock ./
 
 # Copy packages and the current app codebase
 # (In the future, this Dockerfile will be moved into apps/<name>/Dockerfile)
 COPY packages/ packages/
 COPY apps/ apps/
-COPY shared/ shared/
-COPY task_01_resume_rag/ task_01_resume_rag/
-COPY tests/ tests/
+COPY scripts/ scripts/
 
 # Install the workspace in editable mode using uv
 # We sync dependencies to ensure everything defined in pyproject.toml is installed.
@@ -31,4 +29,4 @@ RUN uv pip install pytest httpx
 EXPOSE 8000
 
 # Default command for local development testing
-CMD ["uv", "run", "pytest", "tests/"]
+CMD ["uv", "run", "uvicorn", "apps.resume_analyzer.backend.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -1,1 +1,0 @@
-from ai_vector.schemas.vector import *

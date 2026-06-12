@@ -1,1 +1,0 @@
-from apps.resume_analyzer.backend.pipelines.ranking_pipeline import CandidateAggregator, RankingPipeline
