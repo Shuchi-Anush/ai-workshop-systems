@@ -18,12 +18,26 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Logs
+# Logs & Temp
 *.log
+logs/
+temp/
+tmp/
 
 # Notebook cache
 *.sqlite
+.cache/
 
 # Model cache
 models/
 hf_cache/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
