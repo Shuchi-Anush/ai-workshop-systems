@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Any
 from .dependencies import get_ingestion_pipeline, get_ranking_pipeline
@@ -14,11 +14,26 @@ router = APIRouter()
 async def health_check():
     return {"status": "ok"}
 
+def background_ingest(request: IngestionRequest, pipeline: IIngestionService):
+    if hasattr(pipeline, "ingest_async"):
+        # Not easily awaitable in sync background task runner without async wrapper, 
+        # but fastapi BackgroundTasks supports async def. 
+        pass
+    pipeline.ingest(request)
+
 @router.post("/ingest", response_model=IngestionResult)
 async def ingest_resume(
-    request: IngestionRequest,
+    candidate_id: str = Form(...),
+    file: UploadFile = File(...),
+    trace_id: str = Form(None),
     pipeline: IIngestionService = Depends(get_ingestion_pipeline)
 ):
+    request = IngestionRequest(
+        candidate_id=candidate_id,
+        file_stream=file.file,
+        file_name=file.filename,
+        trace_id=trace_id
+    )
     # Depending on pipeline implementation, it may be sync or async
     if hasattr(pipeline, "ingest_async"):
         return await pipeline.ingest_async(request)

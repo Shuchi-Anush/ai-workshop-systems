@@ -4,7 +4,7 @@ from mocks.mock_metadata_store import MockMetadataStore
 from ai_testing.mocks.mock_embedder import MockEmbedder
 from ai_testing.mocks.mock_vectordb import MockVectorDB
 from apps.resume_analyzer.backend.pipelines.ingestion_pipeline import IngestionPipeline
-from ai_contracts.pipelines.retrieval_pipeline import RetrievalPipeline
+from apps.resume_analyzer.backend.pipelines.retrieval_pipeline import RetrievalPipeline
 from apps.resume_analyzer.backend.pipelines.ranking_pipeline import CandidateAggregator, RankingPipeline
 from ai_contracts.schemas.common import ProcessingStatus
 from apps.resume_analyzer.backend.schemas.ingestion import IngestionRequest
@@ -50,11 +50,13 @@ def test_end_to_end_orchestration(infrastructure):
     # 1. Ingest Candidates
     res_backend = ingestion.ingest(IngestionRequest(
         candidate_id="cand_backend_001",
-        file_path=RESUME_BACKEND  # Passing raw text as path for the mock
+        file_stream=RESUME_BACKEND,  # Passing raw text as stream for the mock
+        file_name="resume_backend.pdf"
     ))
     res_ml = ingestion.ingest(IngestionRequest(
         candidate_id="cand_ml_002",
-        file_path=RESUME_ML
+        file_stream=RESUME_ML,
+        file_name="resume_ml.pdf"
     ))
     
     assert res_backend.status == ProcessingStatus.COMPLETED

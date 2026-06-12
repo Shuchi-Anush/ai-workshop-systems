@@ -9,7 +9,9 @@ dependencies = [
     "ai-testing",
     "fastapi",
     "pydantic",
-    "pytest"
+    "pytest",
+    "uvicorn>=0.23.0",
+    "python-multipart>=0.0.6"
 ]
 
 [build-system]

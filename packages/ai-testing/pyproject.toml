@@ -4,8 +4,15 @@ version = "0.1.0"
 description = "Internal package for ai-testing"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "pydantic>=2.0.0"
+    "pydantic>=2.0.0",
+    "numpy>=1.24.0",
+    "ai-contracts",
+    "ai-vector"
 ]
+
+[tool.uv.sources]
+ai-contracts = { workspace = true }
+ai-vector = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

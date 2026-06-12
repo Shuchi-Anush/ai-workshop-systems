@@ -41,7 +41,7 @@ class IngestionPipeline(IIngestionService, PipelineObservabilityMixin):
         # This pipeline assumes the parser takes the path and handles bytes internally for now.
         try:
             # 1. Parse
-            parse_res = self._trace_execution("parse", trace_id, self._parser.parse, None, request.file_path)
+            parse_res = self._trace_execution("parse", trace_id, self._parser.parse, request.file_stream, request.file_name)
             if parse_res.status == ProcessingStatus.FAILED or not parse_res.document:
                 return IngestionResult(candidate_id=request.candidate_id, document_id="unknown", status=ProcessingStatus.FAILED, error=parse_res.error)
                 

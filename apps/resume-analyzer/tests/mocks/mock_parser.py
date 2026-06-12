@@ -11,11 +11,12 @@ import uuid
 
 class MockParser(IParser):
     def parse(self, file_stream: BinaryIO, file_name: str) -> ParsingResult:
-        # In a real system, we'd extract text. Here we assume file_name holds the raw text for the mock.
+        # In a real system, we'd extract text. Here we assume file_stream holds the raw text for the mock.
+        raw_text = file_stream if isinstance(file_stream, str) else file_name
         doc = ResumeDocument(
             document_id=str(uuid.uuid4()),
             candidate_id="unknown",
-            raw_text=file_name,
+            raw_text=raw_text,
             sections=[],
             metadata=BaseMetadata()
         )
