@@ -2,6 +2,28 @@ venv/
 __pycache__/
 *.pyc
 .env
-data/vector_db/
-outputs/
 .ipynb_checkpoints/
+
+# Vector DBs
+task_01_resume_rag/data/vector_db/
+
+# Outputs
+task_01_resume_rag/outputs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Notebook cache
+*.sqlite
+
+# Model cache
+models/
+hf_cache/
