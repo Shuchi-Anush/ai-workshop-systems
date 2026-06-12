@@ -123,25 +123,48 @@ Examples include:
 
 ## Development Environment
 
-### Create Environment
+We enforce a strict, unified virtual environment graph via [`uv`](https://github.com/astral-sh/uv) to manage the entire monorepo. **Do NOT use `pip` or standard `python -m venv`.**
 
-```bash
-python -m venv venv
-```
+### Prerequisites
 
-### Activate
+1. Install `uv`: [Installation Instructions](https://github.com/astral-sh/uv#installation)
+2. Python 3.11+ installed
 
-**Windows**
+### 1. Bootstrap Workspace
+
+To sync the lockfile and construct the internal package links, run:
 
 ```powershell
-venv\Scripts\Activate.ps1
+uv sync
 ```
 
-### Install Dependencies
+*This deterministically creates `.venv/` and wires all internal `apps/` and `packages/` into the environment.*
 
-```bash
-pip install -r task_01_resume_rag/requirements.txt
+### 2. Execute Tests
+
+To ensure you execute against the managed workspace graph, **always** prefix commands with `uv run`:
+
+```powershell
+uv run pytest tests/
 ```
+
+*Never run `pytest` directly without `uv run`, as it will fall back to your system Python and fail to resolve internal namespaces.*
+
+### 3. Run API
+
+```powershell
+uv run fastapi dev apps/resume-analyzer/src/apps/resume_analyzer/backend/api/main.py
+```
+
+### Automation Scripts
+
+For convenience, PowerShell wrappers are provided in `scripts/`:
+
+* `scripts/setup.ps1` - Runs `uv sync` and validates the environment
+* `scripts/test.ps1` - Runs the test suite via `uv run`
+* `scripts/dev.ps1` - Boots the local dev API via `uv run`
+
+VSCode developers can also use the integrated **Tasks** (`Ctrl+Shift+B`) to run these commands directly.
 
 ---
 

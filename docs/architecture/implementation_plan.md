@@ -1,47 +1,76 @@
-# Phase E — Application Boundary Migration Plan (Corrected)
+# Developer Workflow Standardization
 
-Per the architectural corrections, the migration has been structurally revised to establish proper namespace isolation and future scaling boundaries.
+This implementation plan focuses entirely on developer-experience (DevEx) standardization, execution consistency, and environment robustness.
 
-## 1. Final App Topology
+## 1. Executive Assessment
+The architecture and package topology are stable and structurally sound. However, the runtime shell experience, VSCode integration, and legacy documentation are aggressively guiding developers to break out of the `uv` workspace constraint. By following legacy `README.md` instructions or utilizing stale scripts, developers are inadvertently creating phantom `venv` environments using global Python distributions, thereby rendering the monorepo graph invisible to `pytest` and IDE analysis tools.
 
-To prioritize namespace hygiene over minimal folder depth, we utilize the standard Python namespace package layout (`src/` layout) while maintaining the user-requested conceptual boundary.
+## 2. Root Cause Analysis
+- **Shell Startup Bypass**: Without automatic shell hooks or explicit instructions, terminal sessions inherently default to the `PATH`'s global Python. If a developer runs `pytest`, the global interpreter executes without awareness of the `hatchling` editable install bindings.
+- **Legacy Documentation Leakage**: The `README.md` actively encourages `python -m venv venv` and `pip install -r requirements.txt`. This creates a non-standard `venv` directory that `uv` does not recognize, fracturing dependency resolution.
+- **Ghost Scripts**: Stale scripts like `scripts/runtime/setup.ps1` contain hardcoded legacy commands (`pip install -r requirements-lock.txt`) which bypass the `uv` lockfile entirely.
 
-```text
-apps/
-└── resume-analyzer/
-    ├── pyproject.toml
-    ├── README.md
-    ├── src/
-    │   └── apps/
-    │       └── resume_analyzer/
-    │           └── backend/
-    │               ├── api/
-    │               ├── di/
-    │               ├── parser/
-    │               ├── pipelines/
-    │               ├── rag/
-    │               ├── ranking/
-    │               ├── schemas/
-    │               ├── services/
-    │               └── utils/
-    ├── frontend/            (Placeholder for future UI)
-    └── tests/
-        ├── integration/
-        └── fixtures/
+## 3. Runtime Execution Analysis
+- `uv run <command>` provides **stateless execution guarantee**. It intercepts the command, guarantees the virtual environment is populated according to the `uv.lock`, activates it inline, and executes the command.
+- The `.venv/` directory is the **stateful execution graph**. Activating it (`.venv\Scripts\activate`) mutates the current shell session.
+- To prevent ambiguity, the developer contract must prioritize stateless `uv run` over manual `.venv` shell mutations whenever possible.
+
+## 4. VSCode & Terminal Analysis
+- We successfully stabilized VSCode Python extension resolution by pinning `"python.defaultInterpreterPath"` in `.vscode/settings.json`.
+- However, VSCode Tasks and generic launch configurations are missing. Providing a standardized `.vscode/tasks.json` converts ambiguous CLI interactions into deterministic GUI buttons (Run Tests, Start API, Sync Dependencies).
+
+## 5. Shell Bootstrap Strategy
+- A dedicated `scripts/setup.ps1` should wrap `uv sync`.
+- `README.md` must be entirely rewritten for the `uv` era, explicitly banning `pip install` and `python -m venv`.
+
+## 6. Recommended Developer Contract
+The canonical execution workflow for all developers onboarding to this platform:
+
+1. **Bootstrap**: `uv sync`
+2. **Execute Tests**: `uv run pytest tests/`
+3. **Run API**: `uv run fastapi dev apps/resume-analyzer/src/apps/resume_analyzer/backend/main.py`
+4. **Shell Rules**: Developers are forbidden from using `pip` inside the monorepo.
+
+## 7. Exact Fixes to Apply NOW
+
+### [DELETE] Stale Scripts
+- `scripts/runtime/setup.ps1`
+- `scripts/runtime/run_task1.ps1`
+- `scripts/run_task1.ps1`
+- `scripts/setup.ps1`
+
+### [NEW] `scripts/setup.ps1`
+A unified developer bootstrap script:
+```powershell
+Write-Host "Bootstrapping AI Workshop Systems..."
+uv sync
+Write-Host "Setup complete. Use 'uv run' to execute commands."
 ```
 
-## 2. Namespace Strategy
-The application namespace is strictly `apps.resume_analyzer.backend.*`. This prevents global namespace pollution and allows multiple applications (e.g., `apps.invoice_analyzer.backend.*`) to coexist cleanly within the monorepo workspace.
+### [NEW] `scripts/dev.ps1`
+A script to spin up local dev environments safely:
+```powershell
+Write-Host "Starting Resume Analyzer API..."
+uv run uvicorn task_01_resume_rag.src.api.main:app --reload
+```
 
-## 3. Import Rewrite Strategy
-All imports previously pointing to `task_01_resume_rag.src.*`, `shared.pipelines.*`, or `shared.providers.*` will be surgically rewritten to:
-`from apps.resume_analyzer.backend... import ...`
+### [NEW] `.vscode/tasks.json`
+Standardized IDE actions for testing, syncing, and running the server using `uv run`.
 
-## 4. Backend/Frontend Boundary Rationale
-Hard-separating `backend/` from `frontend/` within the app boundary prevents monolithic entanglement. When a React/Next.js frontend is introduced, it will live in `apps/resume-analyzer/frontend/` and communicate with `backend/` via API, but they will deploy and version together within the logical `resume-analyzer` app boundary.
+### [MODIFY] `README.md`
+Scrub all mentions of `pip`, `requirements.txt`, and standard `venv`. Replace with `uv sync` and `uv run`.
 
-## 5. Future Multi-App Scaling Rationale
-By establishing `apps.*` as the namespace root, we lock in a scalable architecture. Future apps like `security-analyzer` or `agent-orchestrator` can be safely isolated as peer workspace packages (`apps/security-analyzer`, `apps/agent-orchestrator`), complete with their own dependencies and test suites, without risking code collision or deployment entanglement.
+## 8. Recommended Automation Scripts
+- Include an entrypoint script to cleanly wrap backend boot sequences. This prevents shell misconfigurations during local dev.
 
-## 6. Test Topology Rationale
-The integration tests and fixtures are physically moved to `apps/resume-analyzer/tests/`. However, to preserve "temporary root compatibility" and "current CI continuity", we will leave thin wrapper shims in the root `tests/integration/` folder. This allows `uv run pytest tests/` to execute successfully during this transitional phase, but establishes the target state where tests are inherently coupled to the applications they validate.
+## 9. Phase F Runtime Cleanup Recommendations
+- **Docker Drift**: `docker-compose.yml` mounts `task_01_resume_rag`. During Phase F, this must map natively to `apps/resume-analyzer`.
+- **Requirements files**: Once `uv.lock` is fully adopted, `requirements.txt` and `requirements-lock.txt` should be deleted.
+
+## 10. Final Platform Verdict
+By standardizing on `uv run` and deleting all legacy `pip`-based setup logic, the repository will achieve total deterministic immutability. Every execution will behave exactly the same way on every machine.
+
+---
+> [!IMPORTANT]
+> User Review Required
+> Please approve this plan so I can proceed with the destructive cleanup of legacy scripts and the creation of the final dev standard files.
