@@ -1,4 +1,5 @@
-from shared.schemas.domain import Candidate, SkillTag, BaseMetadata
+from shared.schemas.domain import Candidate, SkillTag
+from ai_contracts.schemas.common import BaseMetadata
 
 # Synthetic Resumes (Raw Text)
 RESUME_BACKEND = """

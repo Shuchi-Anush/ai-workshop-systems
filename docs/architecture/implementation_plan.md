@@ -1,54 +1,47 @@
-# AI Systems Platform Monorepo - Pre-Migration Blueprint
+# Phase E — Application Boundary Migration Plan (Corrected)
 
-## 1. Goal Description
+Per the architectural corrections, the migration has been structurally revised to establish proper namespace isolation and future scaling boundaries.
 
-This document serves as the **Safe Execution Blueprint** for the transition to the `uv` Workspace multi-app platform. We have performed a full static migration analysis of the codebase to identify dangerous couplings, unstable import hotspots, and deployment isolation violations *before* any physical files are moved.
+## 1. Final App Topology
 
-## 2. Deep Repository Analysis & Risk Identification
+To prioritize namespace hygiene over minimal folder depth, we utilize the standard Python namespace package layout (`src/` layout) while maintaining the user-requested conceptual boundary.
 
-Based on our static analysis, we have identified several critical breaking points that must be addressed carefully during the migration.
+```text
+apps/
+└── resume-analyzer/
+    ├── pyproject.toml
+    ├── README.md
+    ├── src/
+    │   └── apps/
+    │       └── resume_analyzer/
+    │           └── backend/
+    │               ├── api/
+    │               ├── di/
+    │               ├── parser/
+    │               ├── pipelines/
+    │               ├── rag/
+    │               ├── ranking/
+    │               ├── schemas/
+    │               ├── services/
+    │               └── utils/
+    ├── frontend/            (Placeholder for future UI)
+    └── tests/
+        ├── integration/
+        └── fixtures/
+```
 
-### A. Unstable Import Hotspots (Danger)
-The file `shared/schemas/domain.py` contains `ResumeDocument` and `Candidate`. If `shared/schemas` is blindly moved into `packages/ai-contracts`, the supposedly generic contracts package will be polluted with resume-specific semantics. 
-**Resolution**: `ResumeDocument` and `Candidate` must be extracted locally to `apps/resume-analyzer/schemas/` *before* the generic models (`DocumentChunk`, `BaseMetadata`) are packaged.
+## 2. Namespace Strategy
+The application namespace is strictly `apps.resume_analyzer.backend.*`. This prevents global namespace pollution and allows multiple applications (e.g., `apps.invoice_analyzer.backend.*`) to coexist cleanly within the monorepo workspace.
 
-### B. Over-Generalized Pipelines
-`shared/pipelines/` orchestrates resume ingestion and retrieval. This is highly business-specific logic. 
-**Resolution**: Classified as `APP_LOCAL_ONLY`. It must be moved directly to `apps/resume-analyzer/pipelines/`.
+## 3. Import Rewrite Strategy
+All imports previously pointing to `task_01_resume_rag.src.*`, `shared.pipelines.*`, or `shared.providers.*` will be surgically rewritten to:
+`from apps.resume_analyzer.backend... import ...`
 
-### C. Workspace Lockfile Conflicts
-If apps drift in their underlying PyTorch or SentenceTransformer versions, the entire AI platform can break.
-**Resolution**: The root `pyproject.toml` will establish a strict `[tool.uv.workspace]` definition to force a unified `uv.lock` resolution across all apps and packages.
+## 4. Backend/Frontend Boundary Rationale
+Hard-separating `backend/` from `frontend/` within the app boundary prevents monolithic entanglement. When a React/Next.js frontend is introduced, it will live in `apps/resume-analyzer/frontend/` and communicate with `backend/` via API, but they will deploy and version together within the logical `resume-analyzer` app boundary.
 
-## 3. Package Extraction Readiness Matrix
+## 5. Future Multi-App Scaling Rationale
+By establishing `apps.*` as the namespace root, we lock in a scalable architecture. Future apps like `security-analyzer` or `agent-orchestrator` can be safely isolated as peer workspace packages (`apps/security-analyzer`, `apps/agent-orchestrator`), complete with their own dependencies and test suites, without risking code collision or deployment entanglement.
 
-| Current Module | Target Destination | Classification |
-| --- | --- | --- |
-| `shared/schemas/common.py` | `packages/ai-contracts` | **READY_FOR_EXTRACTION** |
-| `shared/schemas/vector.py` | `packages/ai-vector` | **READY_FOR_EXTRACTION** |
-| `shared/schemas/domain.py` | *Split: App + Package* | **NEEDS_REFACTOR** |
-| `shared/interfaces/*` | `packages/ai-contracts` | **READY_FOR_EXTRACTION** |
-| `shared/mocks/*` | `packages/ai-testing` | **READY_FOR_EXTRACTION** |
-| `shared/pipelines/*` | `apps/resume-analyzer` | **APP_LOCAL_ONLY** |
-
-## 4. Final Migration Execution Checklist
-
-The following 10 pre-migration documents have been successfully generated under `docs/migration-analysis/`:
-1. `01_import_graph_analysis.md`
-2. `02_package_extraction_readiness.md`
-3. `03_app_boundary_analysis.md`
-4. `04_uv_workspace_execution.md`
-5. `05_infrastructure_execution.md`
-6. `06_ci_cd_impact_analysis.md`
-7. `07_migration_blast_radius.md`
-8. `08_future_scaling_simulation.md`
-9. `09_repository_governance_enforcement.md`
-10. `10_final_migration_checklist.md`
-
-All architectural prerequisites have been satisfied. 
-
-## 5. User Review Required
-> [!IMPORTANT]
-> The Full Static Migration Analysis is complete and the blueprint is finalized. We are now ready to cross the boundary into physical execution.
-> 
-> Once approved, I will begin the **Workspace Setup and Package Extraction** phase. This will involve rewriting imports, extracting `ai-contracts`, `ai-vector`, and `ai-testing`, and restructuring the `apps/` directory. Proceed?
+## 6. Test Topology Rationale
+The integration tests and fixtures are physically moved to `apps/resume-analyzer/tests/`. However, to preserve "temporary root compatibility" and "current CI continuity", we will leave thin wrapper shims in the root `tests/integration/` folder. This allows `uv run pytest tests/` to execute successfully during this transitional phase, but establishes the target state where tests are inherently coupled to the applications they validate.

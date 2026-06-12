@@ -1,9 +1,9 @@
 import time
 from typing import List
-from shared.interfaces.retriever import IRetriever
-from shared.interfaces.embedder import IEmbedder
-from shared.interfaces.vectordb import IVectorDB
-from shared.interfaces.storage import IMetadataStore
+from ai_contracts.interfaces.retriever import IRetriever
+from ai_contracts.interfaces.embedder import IEmbedder
+from ai_contracts.interfaces.vectordb import IVectorDB
+from ai_contracts.interfaces.storage import IMetadataStore
 from shared.schemas.retrieval import RetrievalQuery, RetrievedChunk, RetrievalResult
 from .base import PipelineObservabilityMixin
 

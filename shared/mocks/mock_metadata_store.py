@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict
-from shared.interfaces.storage import IMetadataStore
+from ai_contracts.interfaces.storage import IMetadataStore
 from shared.schemas.domain import Candidate, DocumentChunk
 
 class MockMetadataStore(IMetadataStore):

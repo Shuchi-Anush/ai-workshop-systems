@@ -1,9 +1,12 @@
 from typing import BinaryIO, List
-from shared.interfaces.parser import IParser
-from shared.interfaces.cleaner import ICleaner
-from shared.interfaces.chunker import ISectionParser, IChunker
-from shared.schemas.ingestion import ParsingResult, ProcessingStatus
-from shared.schemas.domain import ResumeDocument, ResumeSection, DocumentChunk, SectionType, ChunkMetadata, BaseMetadata
+from ai_contracts.interfaces.parser import IParser
+from ai_contracts.interfaces.cleaner import ICleaner
+from ai_contracts.interfaces.chunker import ISectionParser, IChunker
+from ai_contracts.schemas.common import BaseMetadata, ProcessingStatus
+from shared.schemas.ingestion import ParsingResult
+from apps.resume_analyzer.backend.schemas.domain import ResumeDocument, ResumeSection, SectionType
+from ai_contracts.schemas.chunk import DocumentChunk, ChunkMetadata
+from ai_contracts.schemas.common import BaseMetadata
 import uuid
 
 class MockParser(IParser):

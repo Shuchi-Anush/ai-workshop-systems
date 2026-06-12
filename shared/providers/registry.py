@@ -1,6 +1,6 @@
 from typing import Dict, Type, Any, Callable
-from shared.interfaces.vectordb import IVectorDB
-from shared.interfaces.storage import IMetadataStore
+from ai_contracts.interfaces.vectordb import IVectorDB
+from ai_contracts.interfaces.storage import IMetadataStore
 
 class DependencyRegistry:
     """

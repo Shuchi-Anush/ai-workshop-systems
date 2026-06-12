@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:3.13-slim
+FROM python:3.11.9-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -16,6 +16,7 @@ COPY pyproject.toml ./
 # Copy packages and the current app codebase
 # (In the future, this Dockerfile will be moved into apps/<name>/Dockerfile)
 COPY packages/ packages/
+COPY apps/ apps/
 COPY shared/ shared/
 COPY task_01_resume_rag/ task_01_resume_rag/
 COPY tests/ tests/

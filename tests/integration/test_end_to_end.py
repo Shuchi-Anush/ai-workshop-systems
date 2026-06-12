@@ -1,12 +1,15 @@
 import pytest
 from shared.mocks.mock_parser import MockParser, MockCleaner, MockSectionParser, MockChunker
-from shared.mocks.mock_embedder import MockEmbedder
-from shared.mocks.mock_vectordb import MockVectorDB
+from ai_testing.mocks.mock_embedder import MockEmbedder
+from ai_testing.mocks.mock_vectordb import MockVectorDB
 from shared.mocks.mock_metadata_store import MockMetadataStore
 from shared.pipelines.ingestion_pipeline import IngestionPipeline
 from shared.pipelines.retrieval_pipeline import RetrievalPipeline
 from shared.pipelines.ranking_pipeline import CandidateAggregator, RankingPipeline
-from shared.schemas.ingestion import IngestionRequest, ProcessingStatus
+from ai_contracts.schemas.common import ProcessingStatus
+from ai_contracts.schemas.common import ProcessingStatus
+from shared.schemas.ingestion import IngestionRequest
+from shared.schemas.ranking import RankingResult
 from shared.schemas.retrieval import RetrievalQuery
 from tests.fixtures.synthetic_data import RESUME_BACKEND, RESUME_ML, CANDIDATE_BACKEND, CANDIDATE_ML
 

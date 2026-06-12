@@ -1,0 +1,1 @@
+from apps.resume_analyzer.backend.schemas.domain import *

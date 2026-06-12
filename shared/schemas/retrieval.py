@@ -1,6 +1,6 @@
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
-from .domain import DocumentChunk
+from ai_contracts.schemas.chunk import DocumentChunk
 from .common import TimestampMixin
 
 class RetrievalQuery(BaseModel):
