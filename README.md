@@ -1,11 +1,3 @@
-# AI Workshop Systems
-
-Production-oriented AI systems monorepo for building, testing, and orchestrating scalable AI engineering workflows.
-
-The repository is structured around modular AI tasks, shared infrastructure, reusable orchestration utilities, and production-minded backend architectures.
-
----
-
 ## Core Objectives
 
 This workspace exists to support:

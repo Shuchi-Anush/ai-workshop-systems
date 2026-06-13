@@ -23,10 +23,11 @@ class RetrievalPipeline(IRetriever, PipelineObservabilityMixin):
         trace_id = query.trace_id or "UNKNOWN_TRACE"
         
         # 1. Generate Query Vector
-        query_vector = self._trace_execution(
+        query_vector_obj = self._trace_execution(
             "embed_query", trace_id,
             self._embedder.embed_text, query.query_text
         )
+        query_vector = query_vector_obj.vector if query_vector_obj else []
         
         # 2. Vector DB Search (Returns only IDs and Scores)
         search_results = self._trace_execution(
