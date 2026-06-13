@@ -25,7 +25,8 @@ class IngestionPipeline(IIngestionService, PipelineObservabilityMixin):
                  chunker: IChunker,
                  embedder: IEmbedder,
                  vectordb: IVectorDB,
-                 metadata_store: IMetadataStore):
+                 metadata_store: IMetadataStore,
+                 skill_extractor=None):
         self._parser = parser
         self._cleaner = cleaner
         self._section_parser = section_parser
@@ -33,6 +34,7 @@ class IngestionPipeline(IIngestionService, PipelineObservabilityMixin):
         self._embedder = embedder
         self._vectordb = vectordb
         self._metadata_store = metadata_store
+        self._skill_extractor = skill_extractor
 
     def ingest(self, request: IngestionRequest) -> IngestionResult:
         trace_id = request.trace_id or str(uuid.uuid4())
@@ -57,13 +59,25 @@ class IngestionPipeline(IIngestionService, PipelineObservabilityMixin):
             # 4. Chunking
             chunks = self._trace_execution("chunk", trace_id, self._chunker.chunk, doc)
             
+            # 4.5 Skill Extraction & Metadata Injection
+            if self._skill_extractor:
+                for chunk in chunks:
+                    skills = self._skill_extractor.extract(chunk.content)
+                    if not hasattr(chunk.metadata, 'extracted_skills'):
+                        chunk.metadata.extracted_skills = []
+                    chunk.metadata.extracted_skills.extend(skills)
+            
             # 5. Embedding
             embeddings = self._trace_execution("embed", trace_id, self._embedder.embed_chunks, chunks)
             
             # 6. Storage Dual-Write
             vector_records = []
             for chunk, emb in zip(chunks, embeddings):
-                vector_records.append(VectorRecord(chunk_id=chunk.metadata.chunk_id, embedding=emb))
+                meta = {"candidate_id": request.candidate_id}
+                if getattr(chunk.metadata, "extracted_skills", None):
+                    for s in chunk.metadata.extracted_skills:
+                        meta[f"skill_{s}"] = True
+                vector_records.append(VectorRecord(chunk_id=chunk.metadata.chunk_id, embedding=emb, metadata=meta))
                 
             # Write to metadata store first to preserve relational integrity
             self._trace_execution("store_metadata_chunks", trace_id, self._metadata_store.save_chunks, chunks)

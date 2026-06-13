@@ -1,57 +1,96 @@
 # =========================
+
 # Python
+
 # =========================
+
 venv/
 .venv/
-__pycache__/
+**pycache**/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.coverage
+htmlcov/
 
 # =========================
+
 # Environment
+
 # =========================
+
 .env
 .env.*
 !.env.example
+.env.local
 
 # =========================
+
 # Jupyter
+
 # =========================
+
 .ipynb_checkpoints/
 
 # =========================
-# Runtime Vector Databases
+
+# Runtime / Persistence
+
 # =========================
+
+.data/
 chroma_db/
 apps/resume-analyzer/data/chroma_db/
-
-# Legacy task storage
-task_01_resume_rag/data/vector_db/
-
-# =========================
-# Resume Uploads / Datasets
-# =========================
-apps/resume-analyzer/examples/resumes/
-apps/resume-analyzer/data/resumes/
-*.pdf
-
-# =========================
-# Outputs
-# =========================
-task_01_resume_rag/outputs/
-outputs/
-
-# =========================
-# Runtime Metadata
-# =========================
 metadata.json
 *.sqlite
 *.sqlite3
 
+# Legacy task storage
+
+task_01_resume_rag/data/vector_db/
+
 # =========================
-# Logs & Temp
+
+# RAW DATASETS ONLY
+
 # =========================
+
+datasets/raw/
+datasets/raw/**
+# Generated synthetic outputs
+datasets/synthetic/generated/
+
+# Ignore raw document dumps
+
+datasets/raw/**/*.pdf
+datasets/raw/**/*.doc
+datasets/raw/**/*.docx
+
+# =========================
+
+# Runtime Resume Uploads
+
+# =========================
+
+apps/resume-analyzer/examples/resumes/
+apps/resume-analyzer/data/resumes/
+
+# =========================
+
+# Outputs
+
+# =========================
+
+outputs/
+task_01_resume_rag/outputs/
+
+# =========================
+
+# Logs / Temp
+
+# =========================
+
 *.log
 logs/
 temp/
@@ -59,39 +98,56 @@ tmp/
 .cache/
 
 # =========================
+
 # Model Cache
+
 # =========================
+
 models/
 hf_cache/
 
 # =========================
-# Testing & Coverage
-# =========================
-.pytest_cache/
-.coverage
-htmlcov/
+
+# Build Artifacts
 
 # =========================
-# Build Artifacts
-# =========================
+
 dist/
 build/
 *.egg-info/
 
 # =========================
+
 # IDE
+
 # =========================
+
 .vscode/
 .idea/
 
 # =========================
+
 # OS
+
 # =========================
+
 .DS_Store
 Thumbs.db
 
 # =========================
-# Local Generated Scripts
+
+# Temporary / Migration Scripts
+
 # =========================
+
 create_pdf.py
 test_eval.py
+refactor_routes.py
+setup_phase3.py
+setup_phase3_b.py
+setup_phase4.py
+setup_phase5.py
+
+# Generated benchmark/evaluation outputs
+reports/generated/
+reports/tmp/

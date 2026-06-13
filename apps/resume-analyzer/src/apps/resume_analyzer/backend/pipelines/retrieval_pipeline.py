@@ -13,7 +13,9 @@ class RetrievalPipeline(IRetriever, PipelineObservabilityMixin):
     Depends solely on abstract interfaces.
     """
     
-    def __init__(self, embedder: IEmbedder, vectordb: IVectorDB, metadata_store: IMetadataStore):
+    def __init__(self, embedder: IEmbedder, vectordb: IVectorDB, metadata_store: IMetadataStore, skill_extractor: 'ISkillExtractor' = None):
+        from ai_contracts.interfaces.extraction import ISkillExtractor
+        self._skill_extractor = skill_extractor
         self._embedder = embedder
         self._vectordb = vectordb
         self._metadata_store = metadata_store
@@ -22,6 +24,19 @@ class RetrievalPipeline(IRetriever, PipelineObservabilityMixin):
         start_time = time.time()
         trace_id = query.trace_id or "UNKNOWN_TRACE"
         
+        # 0. Extract Skills for Metadata Filtering
+        if self._skill_extractor:
+            skills = self._trace_execution("extract_skills", trace_id, self._skill_extractor.extract, query.query_text)
+            if skills:
+                # Add ChromaDB deterministic boolean filters
+                query.filters = query.filters or {}
+                if len(skills) == 1:
+                    query.filters[f"skill_{skills[0]}"] = True
+                elif len(skills) > 1:
+                    # Chroma $or clause for multiple skills (increases recall)
+                    clauses = [{f"skill_{s}": True} for s in skills]
+                    query.filters["$or"] = clauses
+                
         # 1. Generate Query Vector
         query_vector_obj = self._trace_execution(
             "embed_query", trace_id,

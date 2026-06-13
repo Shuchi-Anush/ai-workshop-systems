@@ -45,8 +45,9 @@ class LocalJSONMetadataStore(IMetadataStore):
 
     def _save(self):
         os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-        # Atomic write
-        temp_path = self.file_path + ".tmp"
+        # Atomic write with unique temp file
+        import uuid
+        temp_path = f"{self.file_path}.{uuid.uuid4().hex}.tmp"
         try:
             data = {
                 "chunks": {k: v.model_dump(mode="json") if hasattr(v, "model_dump") else v for k, v in self.chunks.items()},

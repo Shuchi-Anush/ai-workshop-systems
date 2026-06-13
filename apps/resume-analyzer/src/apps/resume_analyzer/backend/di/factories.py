@@ -11,8 +11,10 @@ from apps.resume_analyzer.backend.di.container import get_container
 from apps.resume_analyzer.backend.rag.vectordb import ChromaVectorDB
 from apps.resume_analyzer.backend.rag.embedder import OllamaLocalEmbedder
 from apps.resume_analyzer.backend.parser.pdf_parser import PyPDFParser
+from ai_contracts.interfaces.extraction import ISkillExtractor
+from apps.resume_analyzer.backend.parser.extractor import RuleBasedSkillExtractor
 from apps.resume_analyzer.backend.parser.cleaner import SimpleCleaner
-from apps.resume_analyzer.backend.rag.chunker import SimpleSectionParser, SimpleChunker
+from apps.resume_analyzer.backend.rag.chunker import AdvancedSectionParser, ContextAwareChunker
 from apps.resume_analyzer.backend.ranking.ranking_pipeline import LLMRanker, SimpleCandidateAggregator
 from apps.resume_analyzer.backend.pipelines.retrieval_pipeline import RetrievalPipeline
 
@@ -25,17 +27,18 @@ def configure_infrastructure() -> None:
     container = get_container()
     
     # Store
-    container.register_singleton(IMetadataStore, LocalJSONMetadataStore(file_path="data/metadata/metadata.json"))
+    container.register_singleton(IMetadataStore, LocalJSONMetadataStore(file_path=".data/metadata_store/metadata.json"))
     
     # Models & DB
     container.register_singleton(IEmbedder, OllamaLocalEmbedder(model="nomic-embed-text"))
-    container.register_singleton(IVectorDB, ChromaVectorDB(persist_directory="./chroma_db", collection_name="resumes"))
+    container.register_singleton(IVectorDB, ChromaVectorDB(persist_directory=".data/chroma_db/task_01", collection_name="resumes"))
     
     # Parser
     container.register_singleton(IParser, PyPDFParser())
     container.register_singleton(ICleaner, SimpleCleaner())
-    container.register_singleton(ISectionParser, SimpleSectionParser())
-    container.register_singleton(IChunker, SimpleChunker())
+    container.register_singleton(ISectionParser, AdvancedSectionParser())
+    container.register_singleton(ISkillExtractor, RuleBasedSkillExtractor())
+    container.register_singleton(IChunker, ContextAwareChunker())
     
     # Ranking
     container.register_singleton(ICandidateAggregator, SimpleCandidateAggregator())
@@ -51,7 +54,8 @@ def configure_infrastructure() -> None:
             chunker=container.resolve(IChunker),
             embedder=container.resolve(IEmbedder),
             vectordb=container.resolve(IVectorDB),
-            metadata_store=container.resolve(IMetadataStore)
+            metadata_store=container.resolve(IMetadataStore),
+            skill_extractor=container.resolve(ISkillExtractor)
         )
     )
     container.register_singleton(
@@ -59,7 +63,8 @@ def configure_infrastructure() -> None:
         RetrievalPipeline(
             embedder=container.resolve(IEmbedder),
             vectordb=container.resolve(IVectorDB),
-            metadata_store=container.resolve(IMetadataStore)
+            metadata_store=container.resolve(IMetadataStore),
+            skill_extractor=container.resolve(ISkillExtractor)
         )
     )
 

@@ -18,7 +18,13 @@ class ChromaVectorDB(IVectorDB[VectorRecord, VectorSearchResult, List[float]]):
             ids.append(record.chunk_id)
             embeddings.append(record.embedding.vector)
             # Serialize metadata (chroma requires flat dict of str/int/float)
-            metadatas.append({"candidate_id": getattr(record, "candidate_id", "unknown")})
+            # Build Chroma-compatible flat metadata dictionary
+            meta = {"candidate_id": getattr(record, "candidate_id", "unknown")}
+            if hasattr(record, "metadata") and record.metadata:
+                for k, v in record.metadata.items():
+                    if isinstance(v, (str, int, float, bool)):
+                        meta[k] = v
+            metadatas.append(meta)
             
         if ids:
             self.collection.upsert(

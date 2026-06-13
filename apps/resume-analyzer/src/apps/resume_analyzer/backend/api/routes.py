@@ -179,13 +179,25 @@ class EvaluateRequest(BaseModel):
     job_description: str
     top_k: int = 5
 
-@router.post("/evaluate", response_model=RankingResult)
+import uuid
+import json
+import os
+from datetime import datetime
+
+class EvaluateResponse(BaseModel):
+    job_description: str
+    candidates: List[Any]
+    execution_time_ms: float
+
+@router.post("/evaluate", response_model=EvaluateResponse)
 async def evaluate_candidates(
     request: EvaluateRequest,
     retriever: IRetriever = Depends(get_retriever),
-    aggregator: ICandidateAggregator = Depends(get_aggregator),
-    ranker: IRanker = Depends(get_ranking_pipeline)
+    aggregator: ICandidateAggregator = Depends(get_aggregator)
 ):
+    import time
+    start = time.time()
+    
     # 1. Retrieve
     req = RetrievalQuery(query_text=request.job_description, top_k=request.top_k)
     retrieval_res = retriever.retrieve(req)
@@ -194,6 +206,70 @@ async def evaluate_candidates(
     # 2. Aggregate
     candidates = aggregator.aggregate(chunks)
     
-    # 3. Rank
-    return ranker.rank(candidates, request.job_description)
+    # Fast path: return aggregated candidates without LLM explainability
+    return EvaluateResponse(
+        job_description=request.job_description,
+        candidates=[{"candidate": c.candidate, "score": c.score, "chunks": c.supporting_chunks} for c in candidates],
+        execution_time_ms=(time.time() - start) * 1000
+    )
+
+class ExplainJobRequest(BaseModel):
+    candidate_id: str
+    job_description: str
+
+def run_explainability_job(job_id: str, candidate_id: str, job_description: str):
+    job_file = f".data/explainability_jobs/{job_id}.json"
+    
+    try:
+        from apps.resume_analyzer.backend.di.container import get_container
+        from ai_contracts.interfaces.ranking import IRanker
+        from ai_contracts.interfaces.retriever import IRetriever
+        from ai_contracts.interfaces.ranking import ICandidateAggregator
+        
+        container = get_container()
+        retriever = container.resolve(IRetriever)
+        aggregator = container.resolve(ICandidateAggregator)
+        ranker = container.resolve(IRanker)
+        
+        req = RetrievalQuery(query_text=job_description, top_k=5)
+        retrieval_res = retriever.retrieve(req)
+        candidates = aggregator.aggregate(retrieval_res.results)
+        
+        target = next((c for c in candidates if c.candidate.candidate_id == candidate_id), None)
+        if not target:
+            with open(job_file, "w") as f:
+                json.dump({"status": "failed", "error": "Candidate not found in top retrieval"}, f)
+            return
+            
+        # Run ranking just for this candidate to get explanation
+        result = ranker.rank([target], job_description)
+        explanation = result.ranked_candidates[0].score.explainability_log
+        
+        with open(job_file, "w") as f:
+            json.dump({"status": "complete", "explanation": explanation}, f)
+            
+    except Exception as e:
+        with open(job_file, "w") as f:
+            json.dump({"status": "failed", "error": str(e)}, f)
+
+@router.post("/explain/job")
+async def start_explanation(request: ExplainJobRequest, background_tasks: BackgroundTasks):
+    job_id = str(uuid.uuid4())
+    job_file = f".data/explainability_jobs/{job_id}.json"
+    
+    os.makedirs(".data/explainability_jobs", exist_ok=True)
+    with open(job_file, "w") as f:
+        json.dump({"status": "processing"}, f)
+        
+    background_tasks.add_task(run_explainability_job, job_id, request.candidate_id, request.job_description)
+    return {"job_id": job_id}
+
+@router.get("/explain/{job_id}")
+async def get_explanation_status(job_id: str):
+    job_file = f".data/explainability_jobs/{job_id}.json"
+    if not os.path.exists(job_file):
+        return {"status": "not_found"}
+    with open(job_file, "r") as f:
+        return json.load(f)
+
 

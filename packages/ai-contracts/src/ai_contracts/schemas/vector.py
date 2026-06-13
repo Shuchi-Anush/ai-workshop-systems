@@ -13,6 +13,7 @@ class EmbeddingVector(BaseModel):
 class VectorRecord(BaseModel):
     chunk_id: str
     embedding: EmbeddingVector
+    metadata: Dict[str, Any] = {}
     
 class VectorSearchResult(BaseModel):
     chunk_id: str
