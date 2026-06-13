@@ -58,15 +58,19 @@ def configure_infrastructure() -> None:
             skill_extractor=container.resolve(ISkillExtractor)
         )
     )
-    container.register_singleton(
-        IRetriever,
-        RetrievalPipeline(
-            embedder=container.resolve(IEmbedder),
-            vectordb=container.resolve(IVectorDB),
-            metadata_store=container.resolve(IMetadataStore),
-            skill_extractor=container.resolve(ISkillExtractor)
-        )
-    )
+    
+    # BM25 Sparse Retriever
+    from apps.resume_analyzer.backend.retrieval.bm25 import LocalBM25Retriever
+    bm25 = LocalBM25Retriever()
+    container.register(LocalBM25Retriever, bm25)
+    
+    # Retrieval Pipeline
+    container.register(IRetriever, RetrievalPipeline(
+        embedder=container.resolve(IEmbedder),
+        vectordb=container.resolve(IVectorDB),
+        metadata_store=container.resolve(IMetadataStore),
+        skill_extractor=container.resolve(ISkillExtractor)
+    ))
 
 def configure_mock_infrastructure() -> None:
     """Wires the container with mock implementations for tests."""

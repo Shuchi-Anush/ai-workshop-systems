@@ -1,0 +1,173 @@
+{
+  "dense": [
+    {
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "mode": "dense",
+      "retrieved": [
+        "adv_fake_seniority",
+        "20674668_information-technology_java_javascript_python_sql",
+        "adv_hr_keyword_stuffed",
+        "10265057_information-technology_java_python_sql",
+        "10624813_engineering_aws_c++_java_javascript_mongodb_python_sql"
+      ],
+      "expected": [
+        "10265057_information-technology_java_python_sql",
+        "12635195_information-technology_c#_java_javascript_python",
+        "13405733_information-technology_python_sql",
+        "18067556_information-technology_aws_azure_c#_python_sql",
+        "20674668_information-technology_java_javascript_python_sql"
+      ],
+      "fps": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "React Frontend Developer with JavaScript",
+      "mode": "dense",
+      "retrieved": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed",
+        "20674668_information-technology_java_javascript_python_sql",
+        "10624813_engineering_aws_c++_java_javascript_mongodb_python_sql",
+        "12763627_information-technology_c#_javascript_sql"
+      ],
+      "expected": [],
+      "fps": [
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "Senior C# Backend Engineer .NET Core",
+      "mode": "dense",
+      "retrieved": [
+        "12763627_information-technology_c#_javascript_sql",
+        "10089434_information-technology_azure_c#_java_sql",
+        "13385306_information-technology_c#_sql"
+      ],
+      "expected": [
+        "10089434_information-technology_azure_c#_java_sql",
+        "12011623_engineering_c#_machine learning_python_sql",
+        "12763627_information-technology_c#_javascript_sql",
+        "13385306_information-technology_c#_sql",
+        "16186411_information-technology_c#_golang_java_javascript_sql",
+        "26746496_information-technology_c#_c++_golang_java_javascript_sql"
+      ],
+      "fps": []
+    }
+  ],
+  "sparse": [
+    {
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "mode": "sparse",
+      "retrieved": [
+        "adv_fake_seniority",
+        "20674668_information-technology_java_javascript_python_sql",
+        "adv_hr_keyword_stuffed",
+        "10265057_information-technology_java_python_sql",
+        "10624813_engineering_aws_c++_java_javascript_mongodb_python_sql"
+      ],
+      "expected": [
+        "10265057_information-technology_java_python_sql",
+        "12635195_information-technology_c#_java_javascript_python",
+        "13405733_information-technology_python_sql",
+        "18067556_information-technology_aws_azure_c#_python_sql",
+        "20674668_information-technology_java_javascript_python_sql"
+      ],
+      "fps": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "React Frontend Developer with JavaScript",
+      "mode": "sparse",
+      "retrieved": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed",
+        "20674668_information-technology_java_javascript_python_sql",
+        "10624813_engineering_aws_c++_java_javascript_mongodb_python_sql",
+        "12763627_information-technology_c#_javascript_sql"
+      ],
+      "expected": [],
+      "fps": [
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "Senior C# Backend Engineer .NET Core",
+      "mode": "sparse",
+      "retrieved": [
+        "12763627_information-technology_c#_javascript_sql",
+        "10089434_information-technology_azure_c#_java_sql",
+        "13385306_information-technology_c#_sql"
+      ],
+      "expected": [
+        "10089434_information-technology_azure_c#_java_sql",
+        "12011623_engineering_c#_machine learning_python_sql",
+        "12763627_information-technology_c#_javascript_sql",
+        "13385306_information-technology_c#_sql",
+        "16186411_information-technology_c#_golang_java_javascript_sql",
+        "26746496_information-technology_c#_c++_golang_java_javascript_sql"
+      ],
+      "fps": []
+    }
+  ],
+  "hybrid": [
+    {
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "mode": "hybrid",
+      "retrieved": [
+        "adv_fake_seniority",
+        "20674668_information-technology_java_javascript_python_sql",
+        "adv_hr_keyword_stuffed",
+        "10265057_information-technology_java_python_sql",
+        "10624813_engineering_aws_c++_java_javascript_mongodb_python_sql"
+      ],
+      "expected": [
+        "10265057_information-technology_java_python_sql",
+        "12635195_information-technology_c#_java_javascript_python",
+        "13405733_information-technology_python_sql",
+        "18067556_information-technology_aws_azure_c#_python_sql",
+        "20674668_information-technology_java_javascript_python_sql"
+      ],
+      "fps": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "React Frontend Developer with JavaScript",
+      "mode": "hybrid",
+      "retrieved": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed",
+        "20674668_information-technology_java_javascript_python_sql",
+        "10624813_engineering_aws_c++_java_javascript_mongodb_python_sql",
+        "12763627_information-technology_c#_javascript_sql"
+      ],
+      "expected": [],
+      "fps": [
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "Senior C# Backend Engineer .NET Core",
+      "mode": "hybrid",
+      "retrieved": [
+        "12763627_information-technology_c#_javascript_sql",
+        "10089434_information-technology_azure_c#_java_sql",
+        "13385306_information-technology_c#_sql"
+      ],
+      "expected": [
+        "10089434_information-technology_azure_c#_java_sql",
+        "12011623_engineering_c#_machine learning_python_sql",
+        "12763627_information-technology_c#_javascript_sql",
+        "13385306_information-technology_c#_sql",
+        "16186411_information-technology_c#_golang_java_javascript_sql",
+        "26746496_information-technology_c#_c++_golang_java_javascript_sql"
+      ],
+      "fps": []
+    }
+  ]
+}

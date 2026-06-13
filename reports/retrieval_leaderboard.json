@@ -1,0 +1,26 @@
+{
+  "dense": {
+    "Avg Latency (ms)": 39.858102798461914,
+    "Mean MRR": 0.5,
+    "Mean P@3": 0.4444444444444444,
+    "Mean R@3": 0.2333333333333333,
+    "Mean NDCG@3": 0.4320273036552884,
+    "Total False Positives": 3
+  },
+  "sparse": {
+    "Avg Latency (ms)": 33.36087862650553,
+    "Mean MRR": 0.5,
+    "Mean P@3": 0.4444444444444444,
+    "Mean R@3": 0.2333333333333333,
+    "Mean NDCG@3": 0.4320273036552884,
+    "Total False Positives": 3
+  },
+  "hybrid": {
+    "Avg Latency (ms)": 34.75824991861979,
+    "Mean MRR": 0.5,
+    "Mean P@3": 0.4444444444444444,
+    "Mean R@3": 0.2333333333333333,
+    "Mean NDCG@3": 0.4320273036552884,
+    "Total False Positives": 3
+  }
+}

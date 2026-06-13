@@ -32,7 +32,7 @@ def calc_ndcg_k(expected, retrieved, k):
 
 def run_retrieval_benchmarks():
     print("=========================================")
-    print("   PRODUCTION RETRIEVAL EVALUATION SUITE  ")
+    print("   RETRIEVAL LEADERBOARD BENCHMARK SUITE ")
     print("=========================================\n")
     
     # 1. Wait for server
@@ -43,35 +43,12 @@ def run_retrieval_benchmarks():
         except:
             time.sleep(1)
             
-    # 2. Reset and Bulk Ingest the benchmark_ready dataset
-    print("[1] Ingesting benchmark_ready dataset...")
-    requests.post(f"{API_URL}/api/v1/reset-db?confirm=true")
-    
+    # 2. Setup Test Cases
     benchmark_dir = Path("datasets/processed/benchmark_ready")
-    if not benchmark_dir.exists():
-        print("Error: datasets/processed/benchmark_ready does not exist.")
-        return
-        
-    files = []
-    for category in ["golden", "distractors", "adversarial", "noisy"]:
-        cat_dir = benchmark_dir / category
-        if cat_dir.exists():
-            for pdf_file in cat_dir.glob("*.pdf"):
-                files.append(("files", (pdf_file.name, open(pdf_file, "rb"), "application/pdf")))
-                
-    if not files:
-        print("No resumes found in benchmark_ready.")
-        return
-        
-    start_ingest = time.time()
-    res = requests.post(f"{API_URL}/api/v1/bulk-ingest", files=files).json()
-    print(f"    Indexed {res.get('success_count')} resumes across {res.get('total_chunks')} chunks in {time.time()-start_ingest:.2f}s")
-    
     golden_files = [f.stem.lower() for f in (benchmark_dir / "golden").glob("*.pdf")]
     adv_hr_stuffed = "adv_hr_keyword_stuffed"
     adv_fake_seniority = "adv_fake_seniority"
     
-    # Test Cases
     test_cases = [
         {
             "query": "Senior Python Developer with FastAPI and Docker",
@@ -90,51 +67,81 @@ def run_retrieval_benchmarks():
         }
     ]
     
-    print("\n[2] Running Evaluation Cases...")
+    modes = ["dense", "sparse", "hybrid"]
+    results = {mode: {"mrr": [], "p_at_3": [], "r_at_3": [], "ndcg_at_3": [], "latencies": [], "false_positives": 0, "failures": []} for mode in modes}
     
-    metrics = {"mrr": [], "p_at_3": [], "r_at_3": [], "ndcg_at_3": [], "latencies": [], "false_positives": 0}
+    print("[1] Running Evaluation Cases across Dense, Sparse, Hybrid...\n")
     
-    for tc in test_cases:
-        start_eval = time.time()
-        req = {"job_description": tc["query"], "top_k": 5}
-        res = requests.post(f"{API_URL}/api/v1/evaluate", json=req).json()
-        latency = (time.time() - start_eval) * 1000
-        
-        candidates = [c.get("candidate", {}).get("candidate_id") for c in res.get("candidates", [])]
-        expected = [e for e in tc["expected"]]
-        anti_expected = tc.get("anti_expected", [])
-        
-        # Calculate metrics
-        mrr = calc_mrr(expected, candidates)
-        p3 = calc_precision_k(expected, candidates, 3)
-        r3 = calc_recall_k(expected, candidates, 3)
-        ndcg3 = calc_ndcg_k(expected, candidates, 3)
-        fps = sum(1 for c in candidates[:3] if c in anti_expected)
-        
-        metrics["mrr"].append(mrr)
-        metrics["p_at_3"].append(p3)
-        metrics["r_at_3"].append(r3)
-        metrics["ndcg_at_3"].append(ndcg3)
-        metrics["latencies"].append(latency)
-        metrics["false_positives"] += fps
-        
-        print(f"\n  Query: {tc['query']}")
-        print(f"  Lat: {latency:.1f}ms | MRR: {mrr:.2f} | P@3: {p3:.2f} | R@3: {r3:.2f} | NDCG@3: {ndcg3:.2f}")
-        print(f"  Retrieved: {candidates}")
-        if fps > 0:
-            print(f"  [WARNING] False Positive Adversarial Hit: {[c for c in candidates if c in anti_expected]}")
+    for mode in modes:
+        print(f"--- MODE: {mode.upper()} ---")
+        for tc in test_cases:
+            start_eval = time.time()
+            req = {"job_description": tc["query"], "top_k": 5, "mode": mode}
+            res = requests.post(f"{API_URL}/api/v1/evaluate", json=req).json()
+            latency = (time.time() - start_eval) * 1000
+            
+            candidates = [c.get("candidate", {}).get("candidate_id") for c in res.get("candidates", [])]
+            expected = [e for e in tc["expected"]]
+            anti_expected = tc.get("anti_expected", [])
+            
+            mrr = calc_mrr(expected, candidates)
+            p3 = calc_precision_k(expected, candidates, 3)
+            r3 = calc_recall_k(expected, candidates, 3)
+            ndcg3 = calc_ndcg_k(expected, candidates, 3)
+            fps = sum(1 for c in candidates[:3] if c in anti_expected)
+            
+            results[mode]["mrr"].append(mrr)
+            results[mode]["p_at_3"].append(p3)
+            results[mode]["r_at_3"].append(r3)
+            results[mode]["ndcg_at_3"].append(ndcg3)
+            results[mode]["latencies"].append(latency)
+            results[mode]["false_positives"] += fps
+            
+            # Record failures for Phase 2
+            if r3 < 1.0 or fps > 0:
+                results[mode]["failures"].append({
+                    "query": tc["query"],
+                    "mode": mode,
+                    "retrieved": candidates,
+                    "expected": expected,
+                    "fps": [c for c in candidates[:3] if c in anti_expected]
+                })
+                
+            print(f"  Query: {tc['query']}")
+            print(f"  Lat: {latency:.1f}ms | MRR: {mrr:.2f} | R@3: {r3:.2f} | FPs: {fps}")
+        print()
 
-    print("\n[3] Benchmark Summary")
-    print(f"    Avg Latency:    {np.mean(metrics['latencies']):.1f}ms")
-    print(f"    Mean MRR:       {np.mean(metrics['mrr']):.2f}")
-    print(f"    Mean P@3:       {np.mean(metrics['p_at_3']):.2f}")
-    print(f"    Mean R@3:       {np.mean(metrics['r_at_3']):.2f}")
-    print(f"    Mean NDCG@3:    {np.mean(metrics['ndcg_at_3']):.2f}")
-    print(f"    Total False Positives: {metrics['false_positives']} (Adversarial Leaks)")
+    print("\n[2] Benchmark Leaderboard Summary")
+    
+    leaderboard = {}
+    for mode in modes:
+        leaderboard[mode] = {
+            "Avg Latency (ms)": float(np.mean(results[mode]["latencies"])),
+            "Mean MRR": float(np.mean(results[mode]["mrr"])),
+            "Mean P@3": float(np.mean(results[mode]["p_at_3"])),
+            "Mean R@3": float(np.mean(results[mode]["r_at_3"])),
+            "Mean NDCG@3": float(np.mean(results[mode]["ndcg_at_3"])),
+            "Total False Positives": results[mode]["false_positives"]
+        }
+        print(f"  [{mode.upper()}] MRR: {leaderboard[mode]['Mean MRR']:.2f} | R@3: {leaderboard[mode]['Mean R@3']:.2f} | FPs: {leaderboard[mode]['Total False Positives']} | Lat: {leaderboard[mode]['Avg Latency (ms)']:.1f}ms")
 
     os.makedirs("reports", exist_ok=True)
-    with open("reports/benchmark_metrics.json", "w") as f:
-        json.dump({k: float(np.mean(v)) if isinstance(v, list) else v for k, v in metrics.items()}, f, indent=2)
+    with open("reports/retrieval_leaderboard.json", "w") as f:
+        json.dump(leaderboard, f, indent=2)
+        
+    with open("reports/retrieval_leaderboard.md", "w") as f:
+        f.write("# Retrieval Leaderboard\n\n")
+        f.write("| Mode | MRR | P@3 | R@3 | NDCG@3 | False Positives | Avg Latency |\n")
+        f.write("|---|---|---|---|---|---|---|\n")
+        for mode in modes:
+            m = leaderboard[mode]
+            f.write(f"| {mode.upper()} | {m['Mean MRR']:.3f} | {m['Mean P@3']:.3f} | {m['Mean R@3']:.3f} | {m['Mean NDCG@3']:.3f} | {m['Total False Positives']} | {m['Avg Latency (ms)']:.1f}ms |\n")
+            
+    with open("reports/retrieval_failures.json", "w") as f:
+        failures = {mode: results[mode]["failures"] for mode in modes}
+        json.dump(failures, f, indent=2)
+        
+    print("\nLeaderboard generated in reports/retrieval_leaderboard.md")
 
 if __name__ == "__main__":
     os.makedirs("tests/retrieval_benchmarks", exist_ok=True)

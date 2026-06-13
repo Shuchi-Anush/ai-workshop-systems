@@ -1,0 +1,149 @@
+{
+  "summary": {
+    "Keyword Stuffing": 6,
+    "Seniority Inflation": 3,
+    "Dense Similarity Collapse": 2,
+    "Sparse Mismatch": 2,
+    "Hybrid Dilution": 2
+  },
+  "details": [
+    {
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "mode": "dense",
+      "reasons": [
+        "Keyword Stuffing",
+        "Seniority Inflation",
+        "Dense Similarity Collapse"
+      ],
+      "leak_sources": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed"
+      ],
+      "retrieved": [
+        "adv_fake_seniority",
+        "20674668_information-technology_java_javascript_python_sql",
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "React Frontend Developer with JavaScript",
+      "mode": "dense",
+      "reasons": [
+        "Keyword Stuffing"
+      ],
+      "leak_sources": [
+        "adv_hr_keyword_stuffed"
+      ],
+      "retrieved": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed",
+        "20674668_information-technology_java_javascript_python_sql"
+      ]
+    },
+    {
+      "query": "Senior C# Backend Engineer .NET Core",
+      "mode": "dense",
+      "reasons": [
+        "Dense Similarity Collapse"
+      ],
+      "leak_sources": [],
+      "retrieved": [
+        "12763627_information-technology_c#_javascript_sql",
+        "10089434_information-technology_azure_c#_java_sql",
+        "13385306_information-technology_c#_sql"
+      ]
+    },
+    {
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "mode": "sparse",
+      "reasons": [
+        "Keyword Stuffing",
+        "Seniority Inflation",
+        "Sparse Mismatch"
+      ],
+      "leak_sources": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed"
+      ],
+      "retrieved": [
+        "adv_fake_seniority",
+        "20674668_information-technology_java_javascript_python_sql",
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "React Frontend Developer with JavaScript",
+      "mode": "sparse",
+      "reasons": [
+        "Keyword Stuffing"
+      ],
+      "leak_sources": [
+        "adv_hr_keyword_stuffed"
+      ],
+      "retrieved": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed",
+        "20674668_information-technology_java_javascript_python_sql"
+      ]
+    },
+    {
+      "query": "Senior C# Backend Engineer .NET Core",
+      "mode": "sparse",
+      "reasons": [
+        "Sparse Mismatch"
+      ],
+      "leak_sources": [],
+      "retrieved": [
+        "12763627_information-technology_c#_javascript_sql",
+        "10089434_information-technology_azure_c#_java_sql",
+        "13385306_information-technology_c#_sql"
+      ]
+    },
+    {
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "mode": "hybrid",
+      "reasons": [
+        "Keyword Stuffing",
+        "Seniority Inflation",
+        "Hybrid Dilution"
+      ],
+      "leak_sources": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed"
+      ],
+      "retrieved": [
+        "adv_fake_seniority",
+        "20674668_information-technology_java_javascript_python_sql",
+        "adv_hr_keyword_stuffed"
+      ]
+    },
+    {
+      "query": "React Frontend Developer with JavaScript",
+      "mode": "hybrid",
+      "reasons": [
+        "Keyword Stuffing"
+      ],
+      "leak_sources": [
+        "adv_hr_keyword_stuffed"
+      ],
+      "retrieved": [
+        "adv_fake_seniority",
+        "adv_hr_keyword_stuffed",
+        "20674668_information-technology_java_javascript_python_sql"
+      ]
+    },
+    {
+      "query": "Senior C# Backend Engineer .NET Core",
+      "mode": "hybrid",
+      "reasons": [
+        "Hybrid Dilution"
+      ],
+      "leak_sources": [],
+      "retrieved": [
+        "12763627_information-technology_c#_javascript_sql",
+        "10089434_information-technology_azure_c#_java_sql",
+        "13385306_information-technology_c#_sql"
+      ]
+    }
+  ]
+}

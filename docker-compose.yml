@@ -1,70 +1,29 @@
+version: '3.8'
+
 services:
   api:
-    build:
+    build: 
       context: .
-      dockerfile: Dockerfile.dev
-    container_name: ai_workshop_api
-    env_file:
-      - .env.docker
+      dockerfile: Dockerfile.api
     ports:
-      - "8001:8000"
+      - "8081:8081"
+    environment:
+      - WORKSPACE_ENV=production
+      - OLLAMA_HOST=http://host.docker.internal:11434
     volumes:
-      - ./apps:/app/apps
-      - ./packages:/app/packages
-      - ./scripts:/app/scripts
-      - ai_workshop_data:/data
+      - ./.data:/app/.data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  dashboard:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dashboard
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://api:8081
     depends_on:
-      postgres:
-        condition: service_healthy
-      ollama:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: ["uv", "run", "uvicorn", "apps.resume_analyzer.backend.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ai_workshop_ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  postgres:
-    image: postgres:15-alpine
-    container_name: ai_workshop_postgres
-    env_file:
-      - .env.docker
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: ai_workshop_redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  ai_workshop_data:
-  ollama_models:
-  postgres_data:
-  redis_data:
+      - api
+    restart: unless-stopped

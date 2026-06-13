@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks, HTTPException, Header
 from pydantic import BaseModel
 from typing import List, Any
 from .dependencies import get_ingestion_pipeline, get_ranking_pipeline, get_container
@@ -17,9 +17,78 @@ def get_retriever() -> IRetriever:
 def get_aggregator() -> ICandidateAggregator:
     return get_container().resolve(ICandidateAggregator)
 
+import time
+from pathlib import Path
+
 @router.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "timestamp": time.time()}
+
+@router.get("/health/models")
+async def health_models():
+    # Verify Ollama models
+    import urllib.request
+    try:
+        req = urllib.request.urlopen("http://127.0.0.1:11434/api/tags", timeout=5)
+        res = json.loads(req.read().decode())
+        models = [m["name"] for m in res.get("models", [])]
+        return {
+            "status": "ok",
+            "ollama_available": True,
+            "models_loaded": models,
+            "phi3_available": any("phi3" in m for m in models),
+            "nomic_available": any("nomic-embed-text" in m for m in models)
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e), "ollama_available": False}
+
+@router.get("/health/indexes")
+async def health_indexes(
+    retriever: IRetriever = Depends(get_retriever)
+):
+    try:
+        from apps.resume_analyzer.backend.pipelines.retrieval_pipeline import RetrievalPipeline
+        if isinstance(retriever, RetrievalPipeline):
+            chroma_count = getattr(retriever._vectordb._collection, "count", lambda: -1)()
+            bm25_count = len(retriever._bm25_retriever.corpus_chunks) if hasattr(retriever._bm25_retriever, "corpus_chunks") else 0
+            return {
+                "status": "ok",
+                "dense_count": chroma_count,
+                "bm25_count": bm25_count,
+                "synced": chroma_count == bm25_count
+            }
+        return {"status": "unknown"}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+@router.get("/health/storage")
+async def health_storage():
+    base_dir = Path("apps/resume-analyzer/.data")
+    paths = {
+        "chroma": base_dir / "chroma",
+        "metadata": base_dir / "metadata",
+        "bm25": base_dir / "bm25"
+    }
+    stats = {}
+    for name, p in paths.items():
+        if p.exists() and p.is_dir():
+            size = sum(f.stat().st_size for f in p.rglob('*') if f.is_file())
+            stats[name] = {"exists": True, "size_bytes": size}
+        else:
+            stats[name] = {"exists": False}
+    return {"status": "ok", "storage": stats}
+
+@router.get("/health/datasets")
+async def health_datasets():
+    datasets_dir = Path("datasets/processed/benchmark_ready")
+    stats = {}
+    for cat in ["golden", "distractors", "adversarial", "noisy"]:
+        p = datasets_dir / cat
+        if p.exists():
+            stats[cat] = len(list(p.glob("*.pdf")))
+        else:
+            stats[cat] = 0
+    return {"status": "ok", "datasets": stats}
 
 @router.post("/ingest", response_model=IngestionResult)
 async def ingest_resume(
@@ -94,9 +163,19 @@ async def bulk_ingest_resumes(
         except Exception as e:
             failures += 1
             failed_files.append(file.filename)
-            # Safe boundary
             pass
             
+    # Rebuild BM25 after bulk ingest
+    try:
+        from ai_contracts.interfaces.storage import IMetadataStore
+        store = get_container().resolve(IMetadataStore)
+        from apps.resume_analyzer.backend.retrieval.bm25 import LocalBM25Retriever
+        bm25_retriever = get_container().resolve(LocalBM25Retriever)
+        if bm25_retriever:
+            bm25_retriever.rebuild_from_store(store)
+    except Exception as e:
+        pass
+        
     return BulkIngestResult(
         success_count=success,
         failure_count=failures,
@@ -178,6 +257,7 @@ async def search_candidates(
 class EvaluateRequest(BaseModel):
     job_description: str
     top_k: int = 5
+    mode: str = "hybrid" # "hybrid", "dense", "sparse"
 
 import uuid
 import json
@@ -193,23 +273,38 @@ class EvaluateResponse(BaseModel):
 async def evaluate_candidates(
     request: EvaluateRequest,
     retriever: IRetriever = Depends(get_retriever),
-    aggregator: ICandidateAggregator = Depends(get_aggregator)
+    aggregator: ICandidateAggregator = Depends(get_aggregator),
+    trace_id: str = Header(None)
 ):
     import time
     start = time.time()
     
     # 1. Retrieve
-    req = RetrievalQuery(query_text=request.job_description, top_k=request.top_k)
+    req = RetrievalQuery(
+        query_text=request.job_description,
+        top_k=request.top_k,
+        trace_id=trace_id,
+        mode=request.mode
+    )
     retrieval_res = retriever.retrieve(req)
     chunks = retrieval_res.results
     
     # 2. Aggregate
     candidates = aggregator.aggregate(chunks)
     
+    # Include diagnostics from chunks into the candidate
+    candidate_list = []
+    for c in candidates:
+        candidate_dict = {"candidate": c.candidate, "score": c.score, "chunks": c.supporting_chunks}
+        # Get diagnostics from the first supporting chunk if available
+        if c.supporting_chunks and hasattr(c.supporting_chunks[0], "diagnostics"):
+            candidate_dict["diagnostics"] = c.supporting_chunks[0].diagnostics
+        candidate_list.append(candidate_dict)
+
     # Fast path: return aggregated candidates without LLM explainability
     return EvaluateResponse(
         job_description=request.job_description,
-        candidates=[{"candidate": c.candidate, "score": c.score, "chunks": c.supporting_chunks} for c in candidates],
+        candidates=candidate_list,
         execution_time_ms=(time.time() - start) * 1000
     )
 

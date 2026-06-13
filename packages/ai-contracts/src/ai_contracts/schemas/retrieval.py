@@ -8,10 +8,12 @@ class RetrievalQuery(BaseModel):
     top_k: int = 10
     filters: Optional[Dict[str, Any]] = None
     trace_id: Optional[str] = None
+    mode: str = "hybrid" # "hybrid", "dense", "sparse"
 
 class RetrievedChunk(BaseModel):
     chunk: DocumentChunk
     similarity_score: float
+    diagnostics: Optional[Dict[str, Any]] = None
 
 class RetrievalResult(TimestampMixin):
     query: RetrievalQuery

@@ -1,0 +1,46 @@
+{
+  "benchmark_queries": [
+    {
+      "domain": "backend",
+      "query": "Senior Python Developer with FastAPI and Docker",
+      "constraints": ["FastAPI", "Docker", "Python"],
+      "ambiguity_trap": "Must distinguish from basic scripting Python experience"
+    },
+    {
+      "domain": "frontend",
+      "query": "React Frontend Developer with JavaScript",
+      "constraints": ["React", "JavaScript"],
+      "ambiguity_trap": "React Native vs React.js"
+    },
+    {
+      "domain": "backend",
+      "query": "Senior C# Backend Engineer .NET Core",
+      "constraints": ["C#", ".NET Core"],
+      "ambiguity_trap": ".NET Framework vs .NET Core"
+    },
+    {
+      "domain": "devops",
+      "query": "Kubernetes DevOps Engineer with Terraform and AWS",
+      "constraints": ["Kubernetes", "Terraform", "AWS"],
+      "ambiguity_trap": "Must catch infrastructure as code, not just basic AWS console usage"
+    },
+    {
+      "domain": "data_engineering",
+      "query": "Data Engineer PySpark Airflow ETL Pipeline",
+      "constraints": ["PySpark", "Airflow", "ETL"],
+      "ambiguity_trap": "Data Science PySpark vs Data Engineering Airflow pipelines"
+    },
+    {
+      "domain": "cloud_engineering",
+      "query": "GCP Cloud Architect Serverless Cloud Run",
+      "constraints": ["GCP", "Cloud Run", "Serverless"],
+      "ambiguity_trap": "AWS/Azure Serverless vs GCP specific"
+    },
+    {
+      "domain": "hr_adversarial",
+      "query": "Generic Manager synergistic agile scalable leader",
+      "constraints": ["Agile", "Manager"],
+      "ambiguity_trap": "Attracts keyword-stuffed 'synergy' resumes instead of real track records"
+    }
+  ]
+}
