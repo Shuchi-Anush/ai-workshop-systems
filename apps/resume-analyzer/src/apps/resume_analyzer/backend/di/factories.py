@@ -16,37 +16,16 @@ from apps.resume_analyzer.backend.rag.chunker import SimpleSectionParser, Simple
 from apps.resume_analyzer.backend.ranking.ranking_pipeline import LLMRanker, SimpleCandidateAggregator
 from apps.resume_analyzer.backend.pipelines.retrieval_pipeline import RetrievalPipeline
 
+from apps.resume_analyzer.backend.rag.storage import LocalJSONMetadataStore
 from apps.resume_analyzer.backend.pipelines.ingestion_pipeline import IngestionPipeline
 from ai_contracts.interfaces.ingestion import IIngestionService
-
-class InMemoryMetadataStore(IMetadataStore):
-    def __init__(self):
-        self.chunks = {}
-        self.candidates = {}
-        self.documents = {}
-        
-    def save_candidate(self, candidate):
-        self.candidates[candidate.candidate_id] = candidate
-        
-    def get_candidate(self, candidate_id):
-        return self.candidates.get(candidate_id)
-        
-    def save_chunks(self, chunks):
-        for chunk in chunks:
-            self.chunks[chunk.metadata.chunk_id] = chunk
-            
-    def get_chunks_by_ids(self, chunk_ids):
-        return [self.chunks[cid] for cid in chunk_ids if cid in self.chunks]
-        
-    def get_chunks_by_candidate(self, candidate_id):
-        return [chunk for chunk in self.chunks.values() if chunk.metadata.candidate_id == candidate_id]
 
 def configure_infrastructure() -> None:
     """Wires the container with real implementations."""
     container = get_container()
     
     # Store
-    container.register_singleton(IMetadataStore, InMemoryMetadataStore())
+    container.register_singleton(IMetadataStore, LocalJSONMetadataStore(file_path="data/metadata/metadata.json"))
     
     # Models & DB
     container.register_singleton(IEmbedder, OllamaLocalEmbedder(model="nomic-embed-text"))

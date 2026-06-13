@@ -1,172 +1,106 @@
+# AI Workshop Systems Monorepo
+
+Welcome to the AI Engineering Workshop. This repository is a Dual-Zone Monorepo designed to support rapid prototyping of AI applications while maintaining production-grade architectural boundaries.
+
 ## Core Objectives
 
 This workspace exists to support:
-
 * Retrieval-Augmented Generation (RAG) systems
 * FastAPI-based AI services
-* Local LLM orchestration
-* Vector search pipelines
+* Local LLM orchestration (Ollama)
+* Vector search pipelines (ChromaDB)
 * Resume intelligence systems
-* Embedding and ranking workflows
 * AI engineering experimentation
-* Production-style architecture design
 
 The focus is not rapid prototyping alone, but engineering maintainable, extensible, and operationally structured AI systems.
 
 ---
 
-## Repository Philosophy
+## Repository Philosophy (Dual-Zone Strategy)
 
-The monorepo enforces:
+The monorepo strictly enforces a Dual-Zone Architecture:
 
-* Modular task isolation
-* Shared infrastructure reuse
-* Explicit pipeline boundaries
-* Production-oriented backend structure
-* Reproducible local development
-* AI-assisted engineering workflows
+1. **`packages/` (Frozen Platform Infrastructure)**
+   - Contains highly reusable, robust interfaces and implementations.
+   - Example: `ai-contracts` defines the rules for how vector DBs, embedders, and parsers must behave.
+   - NEVER import from `apps/` into `packages/`.
 
-Each task behaves as an independently evolvable AI subsystem while sharing common tooling, utilities, and orchestration layers.
+2. **`apps/` (Innovation Zone)**
+   - Contains isolated workshop tasks and standalone applications.
+   - Example: `apps/resume-analyzer` is the Task 01 application.
+   - Safe to hack, experiment, and mutate during the workshop.
+   - NEVER import from `apps/` into another `apps/`.
 
 ---
 
 ## Current Tasks
 
-| Task                 | Description                                                        | Status             |
-| -------------------- | ------------------------------------------------------------------ | ------------------ |
-| `task_01_resume_rag` | Resume parsing, embedding, retrieval, and candidate ranking system | Active Development |
-
----
-
-## Repository Structure
-
-```text
-ai-workshop-systems/
-│
-├── docs/                       # Architecture docs, workflows, ADRs
-│   └── workflows/
-│
-├── notes/                      # Research notes and engineering references
-│
-├── scripts/                    # Automation and setup scripts
-│
-├── shared/                     # Shared reusable infrastructure
-│   ├── llm/
-│   ├── parsers/
-│   ├── schemas/
-│   └── utils/
-│
-├── task_01_resume_rag/         # Resume RAG pipeline
-│   ├── data/
-│   ├── notebooks/
-│   ├── outputs/
-│   ├── src/
-│   ├── tests/
-│   ├── README.md
-│   └── requirements.txt
-│
-├── .env.example
-├── .gitignore
-├── README.md
-└── requirements-lock.txt
-```
-
----
-
-## Shared Infrastructure
-
-The `shared/` layer contains reusable modules intended to prevent duplicated implementations across tasks.
-
-Examples include:
-
-* LLM wrappers
-* Document parsers
-* Shared schemas
-* Logging utilities
-* Common validation contracts
-* Reusable orchestration helpers
+| Task | App Folder | Description | Status |
+| --- | --- | --- | --- |
+| `Task 01` | `apps/resume-analyzer` | Resume parsing, embedding, retrieval, and candidate ranking system | Active |
 
 ---
 
 ## Technology Stack
 
 ### AI / ML
-
 * LangChain
-* Sentence Transformers
-* FAISS
-* HuggingFace Transformers
-* Ollama
+* ChromaDB
+* Ollama (`nomic-embed-text`, `phi3:mini`)
 
 ### Backend
-
 * FastAPI
-* Python
+* Python 3.11+
 * Pydantic
 
 ### Infrastructure
-
-* Docker
-* GitHub
-* VS Code
+* `uv` for workspace/dependency management
 * Local virtual environments
 
 ---
 
-## Development Environment
+## Development Environment Setup
 
 We enforce a strict, unified virtual environment graph via [`uv`](https://github.com/astral-sh/uv) to manage the entire monorepo. **Do NOT use `pip` or standard `python -m venv`.**
 
 ### Prerequisites
-
 1. Install `uv`: [Installation Instructions](https://github.com/astral-sh/uv#installation)
 2. Python 3.11+ installed
+3. Install Ollama: [ollama.com](https://ollama.com)
 
 ### 1. Bootstrap Workspace
-
 To sync the lockfile and construct the internal package links, run:
-
 ```powershell
 uv sync
 ```
-
 *This deterministically creates `.venv/` and wires all internal `apps/` and `packages/` into the environment.*
 
-### 2. Execute Tests
-
-To ensure you execute against the managed workspace graph, **always** prefix commands with `uv run`:
-
+### 2. Prepare Local Models
+Ensure Ollama is running, then execute:
 ```powershell
-uv run pytest tests/
+ollama pull nomic-embed-text
+ollama pull phi3:mini
 ```
 
-*Never run `pytest` directly without `uv run`, as it will fall back to your system Python and fail to resolve internal namespaces.*
-
-### 3. Run API
-
+### 3. Monorepo Governance Scan
+Before committing, ensure your code maintains the correct dependency boundaries:
 ```powershell
-uv run fastapi dev apps/resume-analyzer/src/apps/resume_analyzer/backend/api/main.py
+uv run python scripts/enforce_boundaries.py
 ```
-
-### Automation Scripts
-
-For convenience, PowerShell wrappers are provided in `scripts/`:
-
-* `scripts/setup.ps1` - Runs `uv sync` and validates the environment
-* `scripts/test.ps1` - Runs the test suite via `uv run`
-* `scripts/dev.ps1` - Boots the local dev API via `uv run`
-
-VSCode developers can also use the integrated **Tasks** (`Ctrl+Shift+B`) to run these commands directly.
 
 ---
 
-## Git Workflow
+## Workshop Task 01: Resume Analyzer
 
-```bash
-git pull
-git add .
-git commit -m "Meaningful commit message"
-git push
+For detailed instructions on running Task 01, the API documentation, bulk ingestion, and dataset loading, see the [Task 01 README](apps/resume-analyzer/README.md).
+
+### Quick Start
+```powershell
+# Boot the backend
+uv run uvicorn apps.resume_analyzer.backend.api.main:app --port 8081 --reload
+
+# Ingest the test dataset
+uv run python apps/resume-analyzer/scripts/load_dataset.py --path apps/resume-analyzer/data/resumes --api-url http://localhost:8081
 ```
 
 ---
@@ -174,32 +108,13 @@ git push
 ## Engineering Principles
 
 This repository prioritizes:
-
-* Architectural clarity
-* Explicit boundaries
-* Maintainability
-* Reusability
+* Architectural clarity and explicit boundaries
+* Maintainability and reusability
 * Deterministic pipelines
-* Local-first AI workflows
+* Local-first AI workflows (offline capability)
 * Production-oriented backend engineering
 
 ---
 
-## Future Roadmap
-
-Planned future systems include:
-
-* Multi-agent orchestration
-* LLM routing systems
-* Evaluation pipelines
-* AI observability tooling
-* Knowledge graph integration
-* Distributed retrieval systems
-* Multi-modal ingestion pipelines
-* Secure AI infrastructure
-
----
-
 ## License
-
 MIT License

@@ -66,7 +66,11 @@ class IngestionPipeline(IIngestionService, PipelineObservabilityMixin):
                 vector_records.append(VectorRecord(chunk_id=chunk.metadata.chunk_id, embedding=emb))
                 
             # Write to metadata store first to preserve relational integrity
-            self._trace_execution("store_metadata", trace_id, self._metadata_store.save_chunks, chunks)
+            self._trace_execution("store_metadata_chunks", trace_id, self._metadata_store.save_chunks, chunks)
+            
+            # Save Candidate Info
+            candidate_metadata = {"candidate_id": request.candidate_id, "file_name": request.file_name}
+            self._trace_execution("store_candidate", trace_id, self._metadata_store.save_candidate, candidate_metadata)
             
             # Write to vector store
             self._trace_execution("store_vectors", trace_id, self._vectordb.upsert, vector_records)
