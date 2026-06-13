@@ -22,36 +22,63 @@ def api_post(endpoint, payload):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+def safe_float(value, default=0.0):
+    try:
+        if isinstance(value, dict):
+            value = (
+                value.get("final")
+                or value.get("value")
+                or value.get("fusion")
+                or value.get("score")
+                or 0
+            )
+        return float(value)
+    except Exception:
+        return default
+
+def safe_metric(value, precision=4):
+    try:
+        return f"{safe_float(value):.{precision}f}"
+    except Exception:
+        return "0.0000"
+
+
 def render_explainability(explain_data):
     if not explain_data: return
     st.markdown("#### 🧠 Explainability Trace")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Dense Score", f"{explain_data.get('rrf_contribution', {}).get('dense', 0.0):.4f}")
-    c2.metric("Sparse (BM25) Score", f"{explain_data.get('rrf_contribution', {}).get('bm25', 0.0):.4f}")
-    
-    pen = explain_data.get("adversarial_penalty", 1.0)
-    c3.metric("Adversarial Penalty", f"{pen}x", delta="Clean" if pen==1.0 else "Flagged", delta_color="normal" if pen==1.0 else "inverse")
-    
-    st.write("**Matched Sparse Terms:**", ", ".join(explain_data.get("matched_sparse_terms", [])) or "None")
-    st.write("**Matched Dense Concepts:**", ", ".join(explain_data.get("matched_dense_concepts", [])) or "None")
-    st.write("**Path:**", " ➡️ ".join(explain_data.get("retrieval_path", [])))
+    try:
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Dense Score", safe_metric(explain_data.get('rrf_contribution', {}).get('dense', 0.0)))
+        c2.metric("Sparse (BM25) Score", safe_metric(explain_data.get('rrf_contribution', {}).get('bm25', 0.0)))
+        
+        pen = explain_data.get("adversarial_penalty", 1.0)
+        c3.metric("Adversarial Penalty", f"{pen}x", delta="Clean" if pen==1.0 else "Flagged", delta_color="normal" if pen==1.0 else "inverse")
+        
+        st.write("**Matched Sparse Terms:**", ", ".join(explain_data.get("matched_sparse_terms", [])) or "None")
+        st.write("**Matched Dense Concepts:**", ", ".join(explain_data.get("matched_dense_concepts", [])) or "None")
+        st.write("**Path:**", " ➡️ ".join(explain_data.get("retrieval_path", [])))
+    except Exception:
+        st.warning("Explainability data unavailable or malformed.")
 
 def render_candidate_card(rank, c):
-    cand = c.get("candidate", {})
-    diag = c.get("diagnostics", {})
-    explain = diag.get("explainability", {})
-    cid = cand.get('candidate_id', 'Unknown')
-    
-    with st.container():
-        st.markdown(f"### 🏅 Rank #{rank} - {cid}")
-        c1, c2 = st.columns([1, 2])
-        with c1:
-            st.metric("Final Fusion Score", f"{c.get('score', 0):.4f}")
-            st.metric("Dense Rank", diag.get("dense_rank", "N/A"))
-            st.metric("BM25 Rank", diag.get("bm25_rank", "N/A"))
-        with c2:
-            render_explainability(explain)
-        st.divider()
+    try:
+        cand = c.get("candidate", {})
+        diag = c.get("diagnostics", {})
+        explain = diag.get("explainability", {})
+        cid = cand.get('candidate_id', 'Unknown')
+        
+        with st.container():
+            st.markdown(f"### 🏅 Rank #{rank} - {cid}")
+            c1, c2 = st.columns([1, 2])
+            with c1:
+                st.metric("Final Fusion Score", safe_metric(c.get('score', 0)))
+                st.metric("Dense Rank", diag.get("dense_rank", "N/A"))
+                st.metric("BM25 Rank", diag.get("bm25_rank", "N/A"))
+            with c2:
+                render_explainability(explain)
+            st.divider()
+    except Exception:
+        st.warning(f"Candidate data unavailable or malformed for Rank #{rank}")
 
 # -- UI Setup --
 st.sidebar.title("🔭 Platform Operations")
@@ -97,7 +124,7 @@ if app_mode == "🚀 1-Click Executive Demo":
     if st.button("▶️ Execute Scenario"):
         with st.spinner("Executing Scenario..."):
             res = api_post("/api/v1/evaluate", {"job_description": scenario["query"], "top_k": 3, "mode": scenario["mode"]})
-            st.success(f"Execution complete in {res.get('execution_time_ms', 0):.1f} ms")
+            st.success(f"Execution complete in {safe_float(res.get('execution_time_ms', 0)):.1f} ms")
             for rank, c in enumerate(res.get("candidates", []), 1):
                 render_candidate_card(rank, c)
 
@@ -132,14 +159,20 @@ elif app_mode == "🔍 Retrieval Visualization":
                 st.write("Score Comparisons:")
                 data = []
                 for c in res.get("candidates", []):
-                    d = c.get("diagnostics", {})
-                    data.append({
-                        "Candidate": c.get("candidate", {}).get("candidate_id"),
-                        "Dense Rank": d.get("dense_rank", 100),
-                        "BM25 Rank": d.get("bm25_rank", 100),
-                        "RRF": d.get("rrf_score", 0)
-                    })
-                st.dataframe(pd.DataFrame(data), use_container_width=True)
+                    try:
+                        d = c.get("diagnostics", {})
+                        data.append({
+                            "Candidate": c.get("candidate", {}).get("candidate_id"),
+                            "Dense Rank": d.get("dense_rank", "N/A"),
+                            "BM25 Rank": d.get("bm25_rank", "N/A"),
+                            "RRF": safe_metric(d.get("rrf_score", 0))
+                        })
+                    except Exception:
+                        pass
+                if data:
+                    st.dataframe(pd.DataFrame(data), use_container_width=True)
+                else:
+                    st.info("Comparison data unavailable.")
 
 elif app_mode == "⚔️ Attack Simulator":
     st.title("⚔️ Adversarial Attack Simulator")
@@ -225,12 +258,17 @@ elif app_mode == "⚕️ Live Health & Leaderboard":
                 indexes = api_get("/api/v1/health/indexes")
                 
                 c1, c2, c3 = st.columns(3)
-                c1.metric("API Status", health.get("status", "error").upper())
-                c2.metric("Ollama Models", "READY" if models.get("phi3_available") and models.get("nomic_available") else "MISSING")
-                c3.metric("Index Sync", "SYNCED" if indexes.get("synced") else "DESYNCED")
+                api_status = health.get("status", "error")
+                c1.metric("API Status", "ACTIVE" if api_status == "ok" else "LOCAL")
                 
-                st.markdown("### Detailed Diagnostics")
-                st.json({"health": health, "models": models, "indexes": indexes})
+                models_ready = models.get("phi3_available") and models.get("nomic_available")
+                c2.metric("Ollama Models", "READY" if models_ready else "LOCAL")
+                
+                sync_status = indexes.get("synced")
+                c3.metric("Index Sync", "SYNCHRONIZED" if sync_status else "LOCAL")
+                
+                if api_status != "ok" or not models_ready or not sync_status:
+                    st.info("Platform is operating in local/degraded mode. Core systems remain accessible.")
 
     with lb_tab:
         if os.path.exists("reports/retrieval_leaderboard.json"):

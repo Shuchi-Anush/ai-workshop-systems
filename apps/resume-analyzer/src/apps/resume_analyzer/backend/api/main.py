@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from .routes import router
+from .recruiter_routes import recruiter_router
 from apps.resume_analyzer.backend.di.factories import configure_infrastructure
 
 @asynccontextmanager
@@ -18,3 +19,4 @@ app = FastAPI(
 )
 
 app.include_router(router, prefix="/api/v1")
+app.include_router(recruiter_router, prefix="/api/v1")

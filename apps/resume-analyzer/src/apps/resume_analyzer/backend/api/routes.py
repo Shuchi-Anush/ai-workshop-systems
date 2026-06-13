@@ -48,8 +48,8 @@ async def health_indexes(
 ):
     try:
         from apps.resume_analyzer.backend.pipelines.retrieval_pipeline import RetrievalPipeline
-        if isinstance(retriever, RetrievalPipeline):
-            chroma_count = getattr(retriever._vectordb._collection, "count", lambda: -1)()
+        if hasattr(retriever, "_vectordb") and hasattr(retriever._vectordb, "collection"):
+            chroma_count = getattr(retriever._vectordb.collection, "count", lambda: -1)()
             bm25_count = len(retriever._bm25_retriever.corpus_chunks) if hasattr(retriever._bm25_retriever, "corpus_chunks") else 0
             return {
                 "status": "ok",

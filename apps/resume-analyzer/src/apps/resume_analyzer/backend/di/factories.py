@@ -62,10 +62,10 @@ def configure_infrastructure() -> None:
     # BM25 Sparse Retriever
     from apps.resume_analyzer.backend.retrieval.bm25 import LocalBM25Retriever
     bm25 = LocalBM25Retriever()
-    container.register(LocalBM25Retriever, bm25)
+    container.register_singleton(LocalBM25Retriever, bm25)
     
     # Retrieval Pipeline
-    container.register(IRetriever, RetrievalPipeline(
+    container.register_singleton(IRetriever, RetrievalPipeline(
         embedder=container.resolve(IEmbedder),
         vectordb=container.resolve(IVectorDB),
         metadata_store=container.resolve(IMetadataStore),

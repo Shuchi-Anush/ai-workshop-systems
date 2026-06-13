@@ -17,7 +17,7 @@ echo [3] Waiting for API to initialize...
 timeout /t 5 /nobreak >nul
 
 echo [4] Starting Streamlit Observatory...
-start "AI Dashboard" cmd /c "uv run streamlit run apps/resume-analyzer/src/apps/resume_analyzer/frontend/dashboard.py"
+start "AI Dashboard" cmd /c "uv run streamlit run apps/resume-analyzer/src/apps/resume_analyzer/frontend/app.py"
 
 echo ===================================================
 echo SYSTEM ONLINE.
