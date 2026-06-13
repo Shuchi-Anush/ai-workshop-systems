@@ -1,43 +1,97 @@
+# =========================
+# Python
+# =========================
 venv/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Environment
+# =========================
 .env
+.env.*
+!.env.example
+
+# =========================
+# Jupyter
+# =========================
 .ipynb_checkpoints/
 
-# Vector DBs
+# =========================
+# Runtime Vector Databases
+# =========================
+chroma_db/
+apps/resume-analyzer/data/chroma_db/
+
+# Legacy task storage
 task_01_resume_rag/data/vector_db/
 
+# =========================
+# Resume Uploads / Datasets
+# =========================
+apps/resume-analyzer/examples/resumes/
+apps/resume-analyzer/data/resumes/
+*.pdf
+
+# =========================
 # Outputs
+# =========================
 task_01_resume_rag/outputs/
+outputs/
 
-# OS
-.DS_Store
-Thumbs.db
+# =========================
+# Runtime Metadata
+# =========================
+metadata.json
+*.sqlite
+*.sqlite3
 
-# IDE
-.vscode/
-.idea/
-
+# =========================
 # Logs & Temp
+# =========================
 *.log
 logs/
 temp/
 tmp/
-
-# Notebook cache
-*.sqlite
 .cache/
 
-# Model cache
+# =========================
+# Model Cache
+# =========================
 models/
 hf_cache/
 
+# =========================
 # Testing & Coverage
+# =========================
 .pytest_cache/
 .coverage
 htmlcov/
 
-# Build artifacts
+# =========================
+# Build Artifacts
+# =========================
 dist/
 build/
 *.egg-info/
+
+# =========================
+# IDE
+# =========================
+.vscode/
+.idea/
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Local Generated Scripts
+# =========================
+create_pdf.py
+test_eval.py
